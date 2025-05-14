@@ -8,7 +8,7 @@ senha VARCHAR(100),
 email VARCHAR(100),
 data_ingresso VARCHAR(100),
 id_instituicao,
-FOREIGN KEY(id_instituicao) REFERENCE (instituicao.id)
+FOREIGN KEY(id_instituicao) REFERENCES (instituicao.id)
 );
 
 CREATE TABLE instituicao (
@@ -17,7 +17,7 @@ nome VARCHAR(100),
 causa_social VARCHAR(100),
 endereco VARCHAR(100),
 id_plano,
-FOREIGN KEY(id_plano) REFERENCE (plano.id)
+FOREIGN KEY(id_plano) REFERENCES (plano.id)
 );
 
 CREATE TABLE plano (
@@ -32,44 +32,12 @@ CREATE TABLE compartilhamento (
 id_compartilhamento INT PRIMARY KEY,
 data_compartilhamento VARCHAR(100),
 id_arquivo,
-FOREIGN KEY(id_arquivo) REFERENCE (arquivo.id),
+FOREIGN KEY(id_arquivo) REFERENCES (arquivo.id),
 id_user_send,
-FOREIGN KEY(id_user_send) REFERENCE (usuario.id),
+FOREIGN KEY(id_user_send) REFERENCES (usuario.id),
 id_user_receive,
-FOREIGN KEY (id_user_receive) REFERENCE (usuario.id)
+FOREIGN KEY (id_user_receive) REFERENCES (usuario.id)
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 CREATE TABLE arquivo(
@@ -77,11 +45,11 @@ CREATE TABLE arquivo(
 id INT PRIMARY KEY AUTO_INCREMET,
 data_de_ultima_alteracao DATETIME,
 url VARCHAR(100) ,
-localizacao VARCHAR(30),
+localizacao VARCHAR(100),
 permissao_de_acesso BOOLEAN,
-nome VARCHAR(30),
-tipo VARCHAR(30),
-tamanho VARCHAR(30)
+nome VARCHAR(100),
+tipo VARCHAR(100),
+tamanho VARCHAR(100)
 );
 
 CREATE TABLE possui(
@@ -89,10 +57,7 @@ id_usuario INT,
 id_arquivo INT,
 FOREIGN  KEY(id_usuario) REFERENCES usuario(id),
 FOREIGN  KEY(id_arquivo) REFERENCES arquivo(id),
-
 );
-
-
 
 CREATE  TABLE comentario(
 id INT PRIMARY KEY AUTO_INCREMET,
@@ -114,9 +79,6 @@ id_usuario INT,
 operacao VARCHAR(100),
 id_usuario_
 
-
-
-
-
-
 );
+
+
