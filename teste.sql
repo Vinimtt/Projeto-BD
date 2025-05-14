@@ -79,7 +79,6 @@ CREATE TABLE historico_de_versionamento (
     conteudo_alterado VARCHAR(100),
     id_arquivo INT,
     FOREIGN KEY (id_usuario) REFERENCES usuario(id),
-    FOREIGN KEY (id_usuario_que_alterou) REFERENCES usuario(id),
     FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
 );
 
