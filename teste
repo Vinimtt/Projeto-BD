@@ -1,0 +1,40 @@
+Create DATABASE WebDrive;
+USE WebDrive;
+
+CREATE TABLE usuario(
+id INT PRIMARY KEY,
+login VARCHAR(100),
+senha VARCHAR(100),
+email VARCHAR(100),
+data_ingresso VARCHAR(100),
+id_instituicao,
+FOREIGN KEY(id_instituicao) REFERENCE (instituicao.id)
+);
+
+CREATE TABLE instituicao (
+id INT PRIMARY KEY,
+nome VARCHAR(100),
+causa_social VARCHAR(100),
+endereco VARCHAR(100),
+id_plano,
+FOREIGN KEY(id_plano) REFERENCE (plano.id)
+);
+
+CREATE TABLE plano (
+id INT PRIMARY KEY,
+nome VARCHAR(100),
+duracao VARCHAR(100),
+data_aquisicao VARCHAR(100),
+espaco_usuario DOUBLE
+);
+
+CREATE TABLE compartilhamento (
+id_compartilhamento INT PRIMARY KEY,
+data_compartilhamento VARCHAR(100),
+id_arquivo,
+FOREIGN KEY(id_arquivo) REFERENCE (arquivo.id),
+id_user_send,
+FOREIGN KEY(id_user_send) REFERENCE (usuario.id),
+id_user_receive,
+FOREIGN KEY (id_user_receive) REFERENCE (usuario.id)
+);
