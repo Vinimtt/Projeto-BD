@@ -1,1 +1,7 @@
-## Repositório para o projeto final da disciplina de Projeto de Banco de Dados.
+# Projeto final 
+
+**Equipe**
+- Nunno Wakiyama Diniz Carvalho
+- Pablo Felipe dos Santos
+- Pedro Alves dos Santos
+- Vinícius Mergulhão Teti
