@@ -38,3 +38,85 @@ FOREIGN KEY(id_user_send) REFERENCE (usuario.id),
 id_user_receive,
 FOREIGN KEY (id_user_receive) REFERENCE (usuario.id)
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE arquivo(
+
+id INT PRIMARY KEY AUTO_INCREMET,
+data_de_ultima_alteracao DATETIME,
+url VARCHAR(100) ,
+localizacao VARCHAR(30),
+permissao_de_acesso BOOLEAN,
+nome VARCHAR(30),
+tipo VARCHAR(30),
+tamanho VARCHAR(30)
+);
+
+CREATE TABLE possui(
+id_usuario INT,
+id_arquivo INT,
+FOREIGN  KEY(id_usuario) REFERENCES usuario(id),
+FOREIGN  KEY(id_arquivo) REFERENCES arquivo(id),
+
+);
+
+
+
+CREATE  TABLE comentario(
+id INT PRIMARY KEY AUTO_INCREMET,
+conteudo VARCHAR(100) ,
+data DATE,
+hora TIME,
+id_usuario INT,
+id_arquivo INT,
+FOREIGN  KEY(id_usuario) REFERENCES usuario(id),
+FOREIGN  KEY(id_arquivo) REFERENCES arquivo(id),
+);
+
+CREATE TABLE historico_de_versionamento(
+id_historico PRIMARY KEY ,
+data DATE,
+hora TIME,
+operacao VARCHAR(100),
+id_usuario INT,
+operacao VARCHAR(100),
+id_usuario_
+
+
+
+
+
+
+);
