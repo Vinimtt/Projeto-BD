@@ -25,7 +25,7 @@ id INT PRIMARY KEY,
 nome VARCHAR(100),
 duracao VARCHAR(100),
 data_aquisicao VARCHAR(100),
-espaco_usuario DOUBLE
+espaco_usuario VARCHAR(100)
 );
 
 CREATE TABLE compartilhamento (
@@ -41,7 +41,6 @@ FOREIGN KEY (id_user_receive) REFERENCES (usuario.id)
 
 
 CREATE TABLE arquivo(
-
 id INT PRIMARY KEY AUTO_INCREMET,
 data_de_ultima_alteracao DATETIME,
 url VARCHAR(100) ,
