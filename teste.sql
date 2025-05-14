@@ -81,4 +81,11 @@ id_usuario_
 
 );
 
-
+CREATE TABLE Admin (
+id INT PRIMARY KEY,
+login VARCHAR(100),
+senha VARCHAR(100),
+email VARCHAR(100),
+data_ingresso VARCHAR(100)
+  
+);
