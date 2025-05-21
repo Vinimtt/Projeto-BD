@@ -155,4 +155,9 @@ INSERT INTO Admin (login, senha, email, data_ingresso) VALUES
 ('admin4', 'admin321', 'admin4@webdrive.com', '2024-04-01'),
 ('admin5', 'admin654', 'admin5@webdrive.com', '2024-05-01');
 
-
+CREATE TABLE atividades_recentes (
+    id_arquivo INT PRIMARY KEY,
+    ultima_versao DATE,
+    acesso ENUM('prioritário', 'não prioritário'),
+    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
+);
