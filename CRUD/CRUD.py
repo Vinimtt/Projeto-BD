@@ -1,7 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 
-# ✅ Função para conectar ao banco
+# ✅ Conexão
 def conectar():
     try:
         connection = mysql.connector.connect(
@@ -17,7 +17,7 @@ def conectar():
         print("❌ Erro ao conectar:", e)
     return None
 
-# ✅ Função genérica para inserção
+# ✅ Funções CRUD genéricas
 def inserir(connection, tabela):
     cursor = connection.cursor()
     colunas = input(f"Digite as colunas separadas por vírgula para a tabela {tabela}: ")
@@ -36,7 +36,6 @@ def inserir(connection, tabela):
     except Error as e:
         print(f"❌ Erro ao inserir na tabela {tabela}:", e)
 
-# ✅ Função genérica para leitura
 def ler(connection, tabela):
     cursor = connection.cursor()
     sql = f"SELECT * FROM {tabela}"
@@ -50,7 +49,6 @@ def ler(connection, tabela):
     except Error as e:
         print(f"❌ Erro ao ler tabela {tabela}:", e)
 
-# ✅ Função genérica para atualização
 def atualizar(connection, tabela):
     cursor = connection.cursor()
     coluna_alvo = input("Digite o nome da coluna que quer atualizar: ")
@@ -67,7 +65,6 @@ def atualizar(connection, tabela):
     except Error as e:
         print(f"❌ Erro ao atualizar tabela {tabela}:", e)
 
-# ✅ Função genérica para exclusão
 def excluir(connection, tabela):
     cursor = connection.cursor()
     coluna_cond = input("Digite a coluna da condição (ex: id): ")
@@ -82,26 +79,17 @@ def excluir(connection, tabela):
     except Error as e:
         print(f"❌ Erro ao excluir da tabela {tabela}:", e)
 
-# ✅ Menu principal
-def main():
-    connection = conectar()
-    if not connection:
-        return
-
+# ✅ Submenu de operações
+def submenu(connection, tabela):
     while True:
-        print("\n===== MENU CRUD WebDrive =====")
+        print(f"\n===== OPERACOES TABELA {tabela.upper()} =====")
         print("1 - Inserir")
         print("2 - Ler")
         print("3 - Atualizar")
         print("4 - Deletar")
-        print("0 - Sair")
+        print("0 - Voltar ao menu principal")
 
         opcao = input("Escolha uma opção: ")
-
-        if opcao == "0":
-            break
-
-        tabela = input("Digite o nome da tabela: ")
 
         if opcao == "1":
             inserir(connection, tabela)
@@ -111,6 +99,44 @@ def main():
             atualizar(connection, tabela)
         elif opcao == "4":
             excluir(connection, tabela)
+        elif opcao == "0":
+            break
+        else:
+            print("❌ Opção inválida.")
+
+# ✅ Menu principal
+def main():
+    connection = conectar()
+    if not connection:
+        return
+
+    while True:
+        print("\n===== MENU PRINCIPAL WebDrive =====")
+        print("Escolha a tabela para mexer:")
+        print("1 - usuarios")
+        print("2 - arquivos")
+        print("3 - instituicoes")
+        print("4 - planos")
+        print("5 - suporte")
+        print("6 - versionamento")
+        print("0 - Sair")
+
+        tabela_opcao = input("Escolha uma opção: ")
+
+        if tabela_opcao == "1":
+            submenu(connection, "usuarios")
+        elif tabela_opcao == "2":
+            submenu(connection, "arquivos")
+        elif tabela_opcao == "3":
+            submenu(connection, "instituicoes")
+        elif tabela_opcao == "4":
+            submenu(connection, "planos")
+        elif tabela_opcao == "5":
+            submenu(connection, "suporte")
+        elif tabela_opcao == "6":
+            submenu(connection, "versionamento")
+        elif tabela_opcao == "0":
+            break
         else:
             print("❌ Opção inválida.")
 
