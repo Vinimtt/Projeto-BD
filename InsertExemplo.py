@@ -5,7 +5,7 @@ try:
     connection = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="",
+        password="", # Insira sua senha se estiver usando localmente
         database="WebDrive"
     )
 

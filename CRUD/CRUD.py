@@ -1,55 +1,88 @@
 import mysql.connector
 from mysql.connector import Error
 
-# ✅ Conexão
+# Conexão
 def conectar():
+
     try:
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="",
+            password="00000849115", # Insira sua senha se estiver usando localmente
             database="WebDrive"
         )
         if connection.is_connected():
-            print("✅ Conectado ao banco WebDrive.")
+            print("Conectado ao banco WebDrive.")
             return connection
     except Error as e:
-        print("❌ Erro ao conectar:", e)
+        print("Erro ao conectar:", e)
     return None
 
-# ✅ Funções CRUD genéricas
 def inserir(connection, tabela):
     cursor = connection.cursor()
-    colunas = input(f"Digite as colunas separadas por vírgula para a tabela {tabela}: ")
-    valores = input(f"Digite os valores separados por vírgula: ")
 
-    colunas_lista = [col.strip() for col in colunas.split(",")]
-    valores_lista = [val.strip() for val in valores.split(",")]
+    # 1. Obter colunas
+    try:
+        cursor.execute(f"SELECT * FROM {tabela} LIMIT 0") # obtem metadados
+        colunas = []
+        # cursor.description retorna info. sobre as colunas
+        for desc in cursor.description: 
+            colunas.append(desc[0])
+        cursor.fetchall()  # Limpa resultados pendentes do SELECT
+    except Error as e:
+        print(f"Ocorreu um erro em obter as colunas da tabela {tabela}: {e}")
+        return
 
-    placeholders = ', '.join(['%s'] * len(valores_lista))
-    sql = f"INSERT INTO {tabela} ({', '.join(colunas_lista)}) VALUES ({placeholders})"
+    # 2. Coletar dados do usuário
+    valores = []
+    print(f"\nInsira os valores para a tabela '{tabela}':")
+    for col in colunas[1:]:  # Ignora a coluna 0 (PK auto_increment)
+        valor = input(f"- {col}: ").strip()
+        # Convertendo valores para int ou float caso precise
+        if valor.isdigit():
+            valor = int(valor)
+        else:
+            try:
+                valor = float(valor)
+            except ValueError:
+                pass
+        valores.append(valor) # Adiciona em valores[]
+
+    # 3. Inserir no banco
+    placeholders = ', '.join(['%s'] * len(valores))
+    sql = f"INSERT INTO {tabela} ({', '.join(colunas[1:])}) VALUES ({placeholders})" # codigo 'em sql' para inserir
 
     try:
-        cursor.execute(sql, valores_lista)
+        cursor.execute(sql, valores)
         connection.commit()
-        print(f"✅ Registro inserido na tabela {tabela}.")
+        print(f"\nRegistro inserido com sucesso na tabela '{tabela}'.")
     except Error as e:
-        print(f"❌ Erro ao inserir na tabela {tabela}:", e)
+        print(f"Ocorreu um erro na inserção da tabela {tabela}: {e}")
+
 
 def ler(connection, tabela):
+
     cursor = connection.cursor()
     sql = f"SELECT * FROM {tabela}"
 
     try:
         cursor.execute(sql)
         resultados = cursor.fetchall()
-        print(f"📋 Registros da tabela {tabela}:")
+
+        # Obtem os nomes das colunas
+        colunas = [desc[0] for desc in cursor.description]
+
+        print(f"\n📋 Registros da tabela {tabela}:\n")
+        print(" | ".join(colunas))  # Imprime cabeçalho com separador
+
         for linha in resultados:
-            print(linha)
+            print(" | ".join(str(campo) for campo in linha))
+
     except Error as e:
-        print(f"❌ Erro ao ler tabela {tabela}:", e)
+        print(f"Erro ao ler tabela {tabela}:", e)
 
 def atualizar(connection, tabela):
+
     cursor = connection.cursor()
     coluna_alvo = input("Digite o nome da coluna que quer atualizar: ")
     novo_valor = input("Digite o novo valor: ")
@@ -61,11 +94,12 @@ def atualizar(connection, tabela):
     try:
         cursor.execute(sql, (novo_valor, valor_cond))
         connection.commit()
-        print(f"✅ Registro atualizado na tabela {tabela}.")
+        print(f"Registro atualizado na tabela {tabela}.")
     except Error as e:
-        print(f"❌ Erro ao atualizar tabela {tabela}:", e)
+        print(f"Erro ao atualizar tabela {tabela}:", e)
 
 def excluir(connection, tabela):
+
     cursor = connection.cursor()
     coluna_cond = input("Digite a coluna da condição (ex: id): ")
     valor_cond = input("Digite o valor da condição: ")
@@ -75,73 +109,95 @@ def excluir(connection, tabela):
     try:
         cursor.execute(sql, (valor_cond,))
         connection.commit()
-        print(f"✅ Registro excluído da tabela {tabela}.")
+        print(f"Registro excluído da tabela {tabela}.")
     except Error as e:
-        print(f"❌ Erro ao excluir da tabela {tabela}:", e)
+        print(f"Erro ao excluir da tabela {tabela}:", e)
 
-# ✅ Submenu de operações
+# Submenu de operações
 def submenu(connection, tabela):
+
     while True:
-        print(f"\n===== OPERACOES TABELA {tabela.upper()} =====")
+        print(f"\n===== OPERACOES TABELA {tabela.upper()} =====\n")
         print("1 - Inserir")
         print("2 - Ler")
         print("3 - Atualizar")
         print("4 - Deletar")
         print("0 - Voltar ao menu principal")
-
+        print("\n==============================================\n")
         opcao = input("Escolha uma opção: ")
 
-        if opcao == "1":
-            inserir(connection, tabela)
-        elif opcao == "2":
-            ler(connection, tabela)
-        elif opcao == "3":
-            atualizar(connection, tabela)
-        elif opcao == "4":
-            excluir(connection, tabela)
-        elif opcao == "0":
-            break
-        else:
-            print("❌ Opção inválida.")
+        match opcao:
+            case '1':
+                inserir(connection, tabela)
+            case '2':
+                ler(connection, tabela)
+            case '3':
+                atualizar(connection, tabela)
+            case '4':
+                excluir(connection, tabela)
+            case '0':
+                break
+            case _:
+                print("Opção inválida.")
 
-# ✅ Menu principal
+#Menu principal
 def main():
+
     connection = conectar()
     if not connection:
         return
 
     while True:
-        print("\n===== MENU PRINCIPAL WebDrive =====")
-        print("Escolha a tabela para mexer:")
-        print("1 - usuarios")
-        print("2 - arquivos")
-        print("3 - instituicoes")
-        print("4 - planos")
-        print("5 - suporte")
-        print("6 - versionamento")
+        print("\n===== MENU PRINCIPAL WebDrive =====\n")
+        print("Escolha a tabela para operar:")
+        print("1 - Admin")
+        print("2 - Arquivo")
+        print("3 - Comentário")
+        print("4 - Compartilhamento")
+        print("5 - Histórico de versionameto")
+        print("6 - Instituição")
+        print("7 - Plano")
+        print("8 - Possui")
+        print("9 - Usuários")
         print("0 - Sair")
-
+        print("\n===================================\n")
         tabela_opcao = input("Escolha uma opção: ")
 
-        if tabela_opcao == "1":
-            submenu(connection, "usuarios")
-        elif tabela_opcao == "2":
-            submenu(connection, "arquivos")
-        elif tabela_opcao == "3":
-            submenu(connection, "instituicoes")
-        elif tabela_opcao == "4":
-            submenu(connection, "planos")
-        elif tabela_opcao == "5":
-            submenu(connection, "suporte")
-        elif tabela_opcao == "6":
-            submenu(connection, "versionamento")
-        elif tabela_opcao == "0":
-            break
-        else:
-            print("❌ Opção inválida.")
+        match tabela_opcao:
+            case '1':
+                ler(connection, "admin")
+                submenu(connection, "admin")
+            case '2':
+                ler(connection, "arquivo")
+                submenu(connection, "arquivo")
+            case '3':
+                ler(connection, "comentario")
+                submenu(connection, "comentario")
+            case '4':
+                ler(connection, "compartilhamento")
+                submenu(connection, "compartilhamento")
+            case '5':
+                ler(connection, "historico_de_versionamento")
+                submenu(connection, "hitorico_de_versionamento")
+            case '6':
+                ler(connection, "instituicao")
+                submenu(connection, "instituicao")
+            case '7':
+                ler(connection, "plano")
+                submenu(connection, "plano")
+            case '8':
+                ler(connection, "possui")
+                submenu(connection, "possui")
+            case '9':
+                ler(connection, "usuario")
+                submenu(connection, "usuario")
+            case '0':
+                break
+            case _:
+                print("Opção inválida.")
 
     connection.close()
-    print("✅ Conexão encerrada.")
+    print("Saindo do programa...")
 
 if __name__ == "__main__":
     main()
