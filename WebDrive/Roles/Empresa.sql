@@ -1,7 +1,7 @@
 CREATE ROLE IF NOT EXISTS 'PapelEmpresa';
 
-GRANT SELECT ON WebDrive.usuarios TO 'PapelEmpresa';
-GRANT SELECT ON WebDrive.arquivos TO 'PapelEmpresa';
+GRANT SELECT ON WebDrive.usuario TO 'PapelEmpresa';
+GRANT SELECT ON WebDrive.arquivo TO 'PapelEmpresa';
 
 CREATE USER IF NOT EXISTS 'empresa'@'localhost' IDENTIFIED BY 'empresa123';
 
