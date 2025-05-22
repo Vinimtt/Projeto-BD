@@ -1,1 +1,0 @@
---tabela atividades_recentes ainda nao criada para o procedure Verificar_atividades
