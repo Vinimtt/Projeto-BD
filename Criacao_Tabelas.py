@@ -33,7 +33,7 @@ try:
             # Tabela instituicao
             """
             CREATE TABLE IF NOT EXISTS instituicao (
-                id INT PRIMARY KEY,
+                id INT PRIMARY KEY AUTO_INCREMENT,
                 nome VARCHAR(100),
                 causa_social VARCHAR(100),
                 endereco VARCHAR(100),
@@ -45,7 +45,7 @@ try:
             # Tabela usuario
             """
             CREATE TABLE IF NOT EXISTS usuario (
-                id INT PRIMARY KEY,
+                id INT PRIMARY KEY AUTO_INCREMENT,
                 login VARCHAR(100),
                 senha VARCHAR(100),
                 email VARCHAR(100),
@@ -72,7 +72,7 @@ try:
             # Tabela compartilhamento
             """
             CREATE TABLE IF NOT EXISTS compartilhamento (
-                id_compartilhamento INT PRIMARY KEY,
+                id_compartilhamento INT PRIMARY KEY AUTO_INCREMENT,
                 data_compartilhamento VARCHAR(100),
                 id_arquivo INT,
                 id_user_send INT,
@@ -111,7 +111,7 @@ try:
             # Tabela historico_de_versionamento
             """
             CREATE TABLE IF NOT EXISTS historico_de_versionamento (
-                id_historico INT PRIMARY KEY,
+                id_historico INT PRIMARY KEY AUTO_INCREMENT,
                 data DATE,
                 hora TIME,
                 operacao VARCHAR(100),
@@ -127,7 +127,7 @@ try:
             # Tabela Admin
             """
             CREATE TABLE IF NOT EXISTS Admin (
-                id INT PRIMARY KEY,
+                id INT PRIMARY KEY AUTO_INCREMENT,
                 login VARCHAR(100),
                 senha VARCHAR(100),
                 email VARCHAR(100),
