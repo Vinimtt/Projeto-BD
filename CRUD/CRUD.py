@@ -81,7 +81,53 @@ def ler(connection, tabela):
     except Error as e:
         print(f"Erro ao ler tabela {tabela}:", e)
 
+def atualizar(connection, nome_tabela):
+    cursor = connection.cursor()
 
+    # 1. Obter os nomes das colunas da tabela
+    try:
+        cursor.execute(f"SELECT * FROM {nome_tabela} LIMIT 0")
+        nomes_colunas = [descricao[0] for descricao in cursor.description]
+        cursor.fetchall()
+    except Error as erro:
+        print(f"Ocorreu um erro ao obter as colunas da tabela '{nome_tabela}': {erro}")
+        return
+
+    # 2. Perguntar qual ID será utilizado na atualização
+    id_coluna = nomes_colunas[0]  # Assume que a primeira coluna é o ID
+    id_valor = input(f"- Informe o valor de '{id_coluna}' do registro a ser atualizado: ").strip()
+    if id_valor.isdigit():
+        id_valor = int(id_valor)
+    else:
+        try:
+            id_valor = float(id_valor)
+        except ValueError:
+            pass  # permanece como string
+
+    # 3. Coletar qual coluna será atualizada e a nova informação
+    nome_coluna = input("- Informe o nome da coluna que deseja atualizar: ").strip()
+    if nome_coluna not in nomes_colunas:
+        print(f"Coluna '{nome_coluna}' não existe na tabela '{nome_tabela}'.")
+        return
+
+    nova_info = input(f"- Informe o novo valor para a coluna '{nome_coluna}': ").strip()
+    if nova_info.isdigit():
+        nova_info = int(nova_info)
+    else:
+        try:
+            nova_info = float(nova_info)
+        except ValueError:
+            pass  # permanece como string
+
+    # 4. Executar o UPDATE no banco de dados
+    sql_update = f"UPDATE {nome_tabela} SET {nome_coluna} = %s WHERE {id_coluna} = %s"
+
+    try:
+        cursor.execute(sql_update, (nova_info, id_valor))
+        connection.commit()
+        print(f"\nRegistro com {id_coluna} = {id_valor} atualizado com sucesso na tabela '{nome_tabela}'.")
+    except Error as erro:
+        print(f"Ocorreu um erro ao atualizar a tabela '{nome_tabela}': {erro}")
 
 def excluir(connection, tabela):
     cursor = connection.cursor()
