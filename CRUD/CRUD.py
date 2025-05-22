@@ -8,7 +8,7 @@ def conectar():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="00000849115", # Insira sua senha se estiver usando localmente
+            password="", # Insira sua senha se estiver usando localmente
             database="WebDrive"
         )
         if connection.is_connected():
@@ -81,37 +81,53 @@ def ler(connection, tabela):
     except Error as e:
         print(f"Erro ao ler tabela {tabela}:", e)
 
-def atualizar(connection, tabela):
 
-    cursor = connection.cursor()
-    coluna_alvo = input("Digite o nome da coluna que quer atualizar: ")
-    novo_valor = input("Digite o novo valor: ")
-    coluna_cond = input("Digite a coluna da condição (ex: id): ")
-    valor_cond = input("Digite o valor da condição: ")
-
-    sql = f"UPDATE {tabela} SET {coluna_alvo} = %s WHERE {coluna_cond} = %s"
-
-    try:
-        cursor.execute(sql, (novo_valor, valor_cond))
-        connection.commit()
-        print(f"Registro atualizado na tabela {tabela}.")
-    except Error as e:
-        print(f"Erro ao atualizar tabela {tabela}:", e)
 
 def excluir(connection, tabela):
-
     cursor = connection.cursor()
-    coluna_cond = input("Digite a coluna da condição (ex: id): ")
-    valor_cond = input("Digite o valor da condição: ")
 
+    # 1. Obter colunas da tabela
+    try:
+        cursor.execute(f"SELECT * FROM {tabela} LIMIT 0")  # obtém metadados
+        colunas = []
+        for desc in cursor.description:
+            colunas.append(desc[0])
+        cursor.fetchall()  # limpa resultados
+    except Error as e:
+        print(f"Ocorreu um erro ao obter as colunas da tabela {tabela}: {e}")
+        return
+
+    # 2. Mostrar colunas disponíveis
+    print(f"\nColunas disponíveis na tabela '{tabela}': {', '.join(colunas)}")
+
+    # 3. Coletar coluna de condição e valor
+    coluna_cond = input("Digite a coluna da condição para exclusão (ex: id): ").strip()
+    if coluna_cond not in colunas:
+        print(f" Coluna '{coluna_cond}' não existe na tabela '{tabela}'.")
+        return
+
+    valor_cond = input(f"Digite o valor da condição para '{coluna_cond}': ").strip()
+    if valor_cond.isdigit():
+        valor_cond = int(valor_cond)
+    else:
+        try:
+            valor_cond = float(valor_cond)
+        except ValueError:
+            pass
+
+    # 4. Montar e executar o DELETE
     sql = f"DELETE FROM {tabela} WHERE {coluna_cond} = %s"
 
     try:
         cursor.execute(sql, (valor_cond,))
         connection.commit()
-        print(f"Registro excluído da tabela {tabela}.")
+        if cursor.rowcount > 0:
+            print(f"\n✅ Registro excluído com sucesso da tabela '{tabela}'.")
+        else:
+            print(f"\n Nenhum registro foi excluído da tabela '{tabela}'.")
     except Error as e:
-        print(f"Erro ao excluir da tabela {tabela}:", e)
+        print(f"Ocorreu um erro ao excluir da tabela {tabela}: {e}")
+
 
 # Submenu de operações
 def submenu(connection, tabela):
