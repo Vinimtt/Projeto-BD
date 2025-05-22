@@ -1,4 +1,11 @@
-CREATE USER IF NOT EXISTS 'PapelAdm'@'localhost' IDENTIFIED BY 'adm123';
-GRANT SELECT, INSERT, UPDATE, DELETE ON WebDrive.* TO 'PapelAdm'@'localhost';
+CREATE ROLE IF NOT EXISTS 'PapelAdm';
 
-FLUSH privileges;
+GRANT SELECT, INSERT, UPDATE, DELETE ON WebDrive.* TO 'PapelAdm';
+
+CREATE USER IF NOT EXISTS 'administrador'@'localhost' IDENTIFIED BY 'adm123';
+
+GRANT 'PapelAdm' TO 'administrador'@'localhost';
+
+SET DEFAULT ROLE 'PapelAdm' TO 'administrador'@'localhost';
+
+FLUSH PRIVILEGES;
