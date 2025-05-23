@@ -59,13 +59,15 @@ try:
             """
             CREATE TABLE IF NOT EXISTS arquivo (
                 id INT PRIMARY KEY AUTO_INCREMENT,
-                data_de_ultima_alteracao DATETIME,
+                data_de_ultima_alteracao VARCHAR(100),
                 url VARCHAR(100),
                 localizacao VARCHAR(100),
-                permissao_de_acesso BOOLEAN,
+                permissao_de_acesso VARCHAR(100),
                 nome VARCHAR(100),
                 tipo VARCHAR(100),
-                tamanho VARCHAR(100)
+                tamanho VARCHAR(100),
+                id_usuario INT,
+                FOREIGN KEY (id_usuario) REFERENCES usuario(id)
             )
             """,
 
@@ -83,24 +85,13 @@ try:
             )
             """,
 
-            # Tabela possui
-            """
-            CREATE TABLE IF NOT EXISTS possui (
-                id_usuario INT,
-                id_arquivo INT,
-                PRIMARY KEY (id_usuario, id_arquivo),
-                FOREIGN KEY (id_usuario) REFERENCES usuario(id),
-                FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
-            )
-            """,
-
             # Tabela comentario
             """
             CREATE TABLE IF NOT EXISTS comentario (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 conteudo VARCHAR(100),
-                data DATE,
-                hora TIME,
+                data VARCHAR(100),
+                hora VARCHAR(100),
                 id_usuario INT,
                 id_arquivo INT,
                 FOREIGN KEY (id_usuario) REFERENCES usuario(id),
@@ -112,8 +103,8 @@ try:
             """
             CREATE TABLE IF NOT EXISTS historico_de_versionamento (
                 id_historico INT PRIMARY KEY AUTO_INCREMENT,
-                data DATE,
-                hora TIME,
+                data VARCHAR(100),
+                hora VARCHAR(100),
                 operacao VARCHAR(100),
                 id_usuario INT,
                 id_usuario_que_alterou INT,
