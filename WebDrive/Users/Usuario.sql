@@ -1,1 +1,0 @@
-CREATE USER IF NOT EXISTS 'usuario'@'localhost' IDENTIFIED BY 'user123';
