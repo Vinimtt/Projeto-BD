@@ -1,6 +1,7 @@
 import mysql.connector
 from mysql.connector import Error
 
+
 # Conexão
 def conectar():
 
@@ -8,7 +9,7 @@ def conectar():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="00000849115", # Insira sua senha se estiver usando localmente
+            password="", # Insira sua senha se estiver usando localmente
             database="WebDrive"
         )
         if connection.is_connected():
