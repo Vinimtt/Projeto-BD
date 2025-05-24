@@ -6,7 +6,7 @@ def iniciar_banco():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="2004"
         )
 
         if connection.is_connected():
@@ -131,57 +131,53 @@ def iniciar_banco():
             
             # CRIAÇÃO DAS PROCEDURES
 
-            procedures = [
-                """
-                CREATE PROCEDURE Conta_usuarios(IN id_arq INT)
-                BEGIN
-                    DECLARE cont INT;
-                    SELECT COUNT(DISTINCT id_user_send) INTO cont 
-                    FROM WebDrive.compartilhamento 
-                    WHERE id_arquivo = id_arq;
+        procedures = [
 
-                    SET cont = cont + 1;
+                """DROP PROCEDURE IF EXISTS Conta_usuarios""",
+                """CREATE PROCEDURE Conta_usuarios(IN p_id_arq INT)
+                BEGIN
+                    DECLARE v_cont INT DEFAULT 0;
+                    SELECT COUNT(DISTINCT u.id_usuario) INTO v_cont
+                    FROM (
+                        SELECT id_user_send AS id_usuario FROM compartilhamento WHERE id_arquivo = p_id_arq
+                        UNION
+                        SELECT id_user_receive AS id_usuario FROM compartilhamento WHERE id_arquivo = p_id_arq
+                    ) AS u;
+                    SELECT v_cont AS qtd_usuarios_com_acesso;
+                END""",
 
-                    SELECT cont AS qtd_usuarios;
-                END
-                """,
-                """
-                CREATE PROCEDURE Chavear(IN id_arq INT)
+                """DROP PROCEDURE IF EXISTS Chavear""",
+                """CREATE PROCEDURE Chavear(IN p_id_arq INT)
                 BEGIN
-                    IF (SELECT acesso FROM atividades_recentes WHERE id_arquivo = id_arq LIMIT 1) = 'prioritário' THEN
-                        UPDATE atividades_recentes 
-                        SET acesso = 'não prioritário' 
-                        WHERE id_arquivo = id_arq;
-                    ELSE
-                        UPDATE atividades_recentes 
-                        SET acesso = 'prioritário' 
-                        WHERE id_arquivo = id_arq;
-                    END IF;
-                END
-                """,
-                """
-                CREATE PROCEDURE Verificar_atividades()
+                    INSERT INTO atividades_recentes (id_arquivo, acesso, ultima_versao)
+                    VALUES (p_id_arq, 'prioritário', NOW())
+                    ON DUPLICATE KEY UPDATE
+                        acesso = IF(acesso = 'prioritário', 'não prioritário', 'prioritário'),
+                        ultima_versao = NOW();
+                    SELECT CONCAT('Acesso do arquivo ', p_id_arq, ' alterado.') AS status_alteracao;
+                END""",
+
+                """DROP PROCEDURE IF EXISTS Verificar_atividades""",
+                """CREATE PROCEDURE Verificar_atividades()
                 BEGIN
-                    UPDATE atividades_recentes 
+                    UPDATE atividades_recentes
                     SET ultima_versao = NOW();
-                END
-                """,
-                """
-                CREATE PROCEDURE Remover_acessos(IN id_arq INT)
+                    SELECT 'Ultima versão atualizada.' AS resultado;
+                END""",
+
+                """DROP PROCEDURE IF EXISTS Remover_acessos""",
+                """CREATE PROCEDURE Remover_acessos(IN p_id_arq INT)
                 BEGIN
-                    DELETE FROM compartilhamento 
-                    WHERE id_arquivo = id_arq;
-                END
-                """
+                    DELETE FROM compartilhamento
+                    WHERE id_arquivo = p_id_arq;
+                    SELECT CONCAT('Acessos do arquivo ', p_id_arq, ' removidos.') AS resultado;
+                END"""
             ]
 
-            for proc in procedures:
-                cursor.execute(f"DROP PROCEDURE IF EXISTS {proc.split()[2]}")
-                cursor.execute(f"DELIMITER $$")
+        for proc in procedures:
                 cursor.execute(proc)
-                cursor.execute(f"DELIMITER ;")
 
-            print("Procedures criadas com sucesso!")
+        print("Procedures criadas com sucesso!")
 
     except Error as e:
         print("Erro ao executar:", e)
@@ -197,7 +193,7 @@ def configurar_roles():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="2004"
         )
 
         if connection.is_connected():
