@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
+from auxiliar import iniciar_banco, configurar_roles
 
 
 # Conexão
@@ -388,6 +389,8 @@ def submenu(connection, tabela):
 
 #Menu principal
 def main():
+    iniciar_banco()
+    configurar_roles()
 
     connection = conectar()
     if not connection:
