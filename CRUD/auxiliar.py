@@ -6,14 +6,13 @@ def iniciar_banco():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="1234"
+            password=""
         )
 
         if connection.is_connected():
             print("Conectado ao MySQL com sucesso!")
             cursor = connection.cursor()
 
-            # Criar banco de dados
             cursor.execute("CREATE DATABASE IF NOT EXISTS WebDrive")
             cursor.execute("USE WebDrive")
 
@@ -98,126 +97,31 @@ def iniciar_banco():
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     id_arquivo INT UNIQUE,
                     acesso VARCHAR(50),
-                    ultima_versao DATE,
+                    ultima_versao DATETIME,
                     FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
-                ) ENGINE=InnoDB
-            """
-
+                ) ENGINE=InnoDB"""
             ]
-            
-            print("Tabela atividades_recentes criada com sucesso!")
 
             for comando in tabelas:
                 cursor.execute(comando)
 
-            print("Todas as tabelas foram criadas com sucesso no banco WebDrive!")
-            print("Tabela atividades_recentes criada com sucesso!")
+            print("Todas as tabelas foram criadas com sucesso!")
 
-            # Inserir dados de teste em plano
+            # Inserção de dados de teste
             cursor.execute("INSERT INTO plano (nome, duracao, data_aquisicao, espaco_usuario) VALUES ('Plano Básico', '12 meses', '2025-01-01', 10.0)")
-
-            # Inserir dados de teste em instituicao
             cursor.execute("INSERT INTO instituicao (nome, causa_social, endereco, id_plano) VALUES ('Instituto ABC', 'Educação', 'Rua X', 1)")
-
-            # Inserir dados de teste em usuario
             cursor.execute("INSERT INTO usuario (login, senha, email, data_ingresso, id_instituicao) VALUES ('user1', '1234', 'user1@email.com', '2025-01-01', 1)")
-
-            # Inserir dados de teste em arquivo
             cursor.execute("INSERT INTO arquivo (data_de_ultima_alteracao, url, localizacao, permissao_de_acesso, nome, tipo, tamanho, id_usuario) VALUES ('2025-01-01', 'http://arquivo.com', 'pasta1', 'privado', 'arquivo1', 'txt', '1KB', 1)")
-
-            # Inserir dados de teste em compartilhamento
             cursor.execute("INSERT INTO compartilhamento (data_compartilhamento, id_arquivo, id_user_send, id_user_receive) VALUES ('2025-01-01', 1, 1, 1)")
-
-            # Inserir dados de teste em comentario
             cursor.execute("INSERT INTO comentario (conteudo, data, hora, id_usuario, id_arquivo) VALUES ('Comentário teste', '2025-01-01', '10:00', 1, 1)")
-
-            # Inserir dados de teste em historico_de_versionamento
             cursor.execute("INSERT INTO historico_de_versionamento (data, hora, operacao, id_usuario, id_usuario_que_alterou, conteudo_alterado, id_arquivo) VALUES ('2025-01-01', '10:00', 'Criação', 1, 1, 'Novo Conteúdo', 1)")
-
-            # Inserir dados de teste em Admin
             cursor.execute("INSERT INTO Admin (login, senha, email, data_ingresso) VALUES ('admin', 'admin123', 'admin@webdrive.com', '2025-01-01')")
 
             connection.commit()
             print("Dados de teste inseridos com sucesso!")
-            
-            
-        #Criação dos triggers    
-        triggers = [
-            """
-            DELIMITER $$
 
-            CREATE TRIGGER Registrar_operacao
-            AFTER UPDATE ON arquivo
-            FOR EACH ROW
-            BEGIN
-                UPDATE atividades_recentes
-                    SET ultima_versao = NOW()
-                    WHERE id_arquivo = NEW.id;
-            END$$
-
-            DELIMITER ;
-            """
-            
-            """
-            DELIMITER $$
-
-            CREATE TRIGGER Safe_security
-            BEFORE INSERT ON arquivo
-            FOR EACH ROW
-            BEGIN
-                IF NEW.nome LIKE '%.exe' OR 
-                NEW.nome LIKE '%.bat' OR 
-                NEW.nome LIKE '%.sh' OR
-                NEW.nome LIKE '%.msi' OR
-                NEW.nome LIKE '%.cmd' THEN
-                    SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = ' Arquivos executáveis não são permitidos.';
-                END IF;
-            END$$
-
-            DELIMITER ;
-            """
-        ]    
-            
-        for trigger in triggers:
-            cursor.execute(trigger)
-
-        #Criação das views
-        views = [
-            """
-            CREATE VIEW view_admin AS
-            
-            SELECT a.nome,a.tipo,a.tamanho,a.localizacao, a.url, a.data_de_ultima_alteracao
-            
-            FROM arquivo a;
-            """
-            """
-            CREATE VIEW view_usuario AS
-
-            SELECT a.nome, a.tipo, a.tamanho, a.localizacao, a.url, a.data_de_ultima_alteracao
-
-            FROM arquivo a
-
-            WHERE a.id_usuario = 1
-
-            OR a.id IN (SELECT id_arquivo FROM compartilhamento WHERE id_user_receive = 1);
-            """
-            """
-            CREATE VIEW view_usuarios_historico AS
-            SELECT hv.operacao,hv.data,hv.hora,hv.conteudo_alterado
-
-            FROM historico_de_versionamento hv
-
-            WHERE hv.id_usuario = 1
-            """
-        ]
-        for view in views:
-            cursor.execute(view)
-        print("Views criadas com sucesso")
-
-        # CRIAÇÃO DAS PROCEDURES
-        procedures = [
-
+            # Procedures
+            procedures = [
                 """DROP PROCEDURE IF EXISTS Conta_usuarios""",
                 """CREATE PROCEDURE Conta_usuarios(IN p_id_arq INT)
                 BEGIN
@@ -230,7 +134,6 @@ def iniciar_banco():
                     ) AS u;
                     SELECT v_cont AS qtd_usuarios_com_acesso;
                 END""",
-
                 """DROP PROCEDURE IF EXISTS Chavear""",
                 """CREATE PROCEDURE Chavear(IN p_id_arq INT)
                 BEGIN
@@ -241,28 +144,74 @@ def iniciar_banco():
                         ultima_versao = NOW();
                     SELECT CONCAT('Acesso do arquivo ', p_id_arq, ' alterado.') AS status_alteracao;
                 END""",
-
                 """DROP PROCEDURE IF EXISTS Verificar_atividades""",
                 """CREATE PROCEDURE Verificar_atividades()
                 BEGIN
-                    UPDATE atividades_recentes
-                    SET ultima_versao = NOW();
+                    UPDATE atividades_recentes SET ultima_versao = NOW();
                     SELECT 'Ultima versão atualizada.' AS resultado;
                 END""",
-
                 """DROP PROCEDURE IF EXISTS Remover_acessos""",
                 """CREATE PROCEDURE Remover_acessos(IN p_id_arq INT)
                 BEGIN
-                    DELETE FROM compartilhamento
-                    WHERE id_arquivo = p_id_arq;
+                    DELETE FROM compartilhamento WHERE id_arquivo = p_id_arq;
                     SELECT CONCAT('Acessos do arquivo ', p_id_arq, ' removidos.') AS resultado;
                 END"""
             ]
-
-        for proc in procedures:
+            for proc in procedures:
                 cursor.execute(proc)
+            print("Procedures criadas com sucesso!")
 
-        print("Procedures criadas com sucesso!")
+            # Triggers (sem DELIMITER, adaptados para execução direta)
+            cursor.execute("""
+            DROP TRIGGER IF EXISTS Registrar_operacao""")
+            cursor.execute("""
+            CREATE TRIGGER Registrar_operacao
+            AFTER UPDATE ON arquivo
+            FOR EACH ROW
+            BEGIN
+                UPDATE atividades_recentes
+                SET ultima_versao = NOW()
+                WHERE id_arquivo = NEW.id;
+            END
+            """)
+
+            cursor.execute("""
+            DROP TRIGGER IF EXISTS Safe_security""")
+            cursor.execute("""
+            CREATE TRIGGER Safe_security
+            BEFORE INSERT ON arquivo
+            FOR EACH ROW
+            BEGIN
+                IF NEW.nome LIKE '%.exe' OR NEW.nome LIKE '%.bat' OR NEW.nome LIKE '%.sh' OR
+                   NEW.nome LIKE '%.msi' OR NEW.nome LIKE '%.cmd' THEN
+                    SIGNAL SQLSTATE '45000'
+                    SET MESSAGE_TEXT = 'Arquivos executáveis não são permitidos.';
+                END IF;
+            END
+            """)
+
+            print("Triggers criadas com sucesso!")
+
+            # Views
+            views = [
+                """CREATE OR REPLACE VIEW view_admin AS
+                SELECT a.nome, a.tipo, a.tamanho, a.localizacao, a.url, a.data_de_ultima_alteracao
+                FROM arquivo a""",
+                """CREATE OR REPLACE VIEW view_usuario AS
+                SELECT a.nome, a.tipo, a.tamanho, a.localizacao, a.url, a.data_de_ultima_alteracao
+                FROM arquivo a
+                WHERE a.id_usuario = 1 OR a.id IN (
+                    SELECT id_arquivo FROM compartilhamento WHERE id_user_receive = 1
+                )""",
+                """CREATE OR REPLACE VIEW view_usuarios_historico AS
+                SELECT hv.operacao, hv.data, hv.hora, hv.conteudo_alterado
+                FROM historico_de_versionamento hv
+                WHERE hv.id_usuario = 1"""
+            ]
+            for view in views:
+                cursor.execute(view)
+
+            print("Views criadas com sucesso!")
 
     except Error as e:
         print("Erro ao executar:", e)
@@ -285,14 +234,12 @@ def configurar_roles():
             print("Configurando roles e usuários...")
             cursor = connection.cursor()
 
-            # PapelAdm
             cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelAdm'")
             cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON WebDrive.* TO 'PapelAdm'")
             cursor.execute("CREATE USER IF NOT EXISTS 'administrador'@'localhost' IDENTIFIED BY 'adm123'")
             cursor.execute("GRANT 'PapelAdm' TO 'administrador'@'localhost'")
             cursor.execute("SET DEFAULT ROLE 'PapelAdm' TO 'administrador'@'localhost'")
 
-            # PapelEmpresa
             cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelEmpresa'")
             cursor.execute("GRANT SELECT ON WebDrive.usuario TO 'PapelEmpresa'")
             cursor.execute("GRANT SELECT ON WebDrive.arquivo TO 'PapelEmpresa'")
@@ -300,7 +247,6 @@ def configurar_roles():
             cursor.execute("GRANT 'PapelEmpresa' TO 'empresa'@'localhost'")
             cursor.execute("SET DEFAULT ROLE 'PapelEmpresa' TO 'empresa'@'localhost'")
 
-            # falta terminar ainda
             cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelUsuario'")
             cursor.execute("GRANT SELECT, INSERT, UPDATE ON WebDrive.arquivo TO 'PapelUsuario'")
             cursor.execute("CREATE USER IF NOT EXISTS 'usuario'@'localhost' IDENTIFIED BY 'usuario123'")
