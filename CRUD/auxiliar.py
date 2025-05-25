@@ -6,7 +6,7 @@ def iniciar_banco():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="1234"
         )
 
         if connection.is_connected():
@@ -141,8 +141,48 @@ def iniciar_banco():
             print("Dados de teste inseridos com sucesso!")
             
             
-            # CRIAÇÃO DAS PROCEDURES
+        #Criação dos triggers    
+        triggers = [
+            """
+            DELIMITER $$
 
+            CREATE TRIGGER Registrar_operacao
+            AFTER UPDATE ON arquivo
+            FOR EACH ROW
+            BEGIN
+                UPDATE atividades_recentes
+                    SET ultima_versao = NOW()
+                    WHERE id_arquivo = NEW.id;
+            END$$
+
+            DELIMITER ;
+            """
+            
+            """
+            DELIMITER $$
+
+            CREATE TRIGGER Safe_security
+            BEFORE INSERT ON arquivo
+            FOR EACH ROW
+            BEGIN
+                IF NEW.nome LIKE '%.exe' OR 
+                NEW.nome LIKE '%.bat' OR 
+                NEW.nome LIKE '%.sh' OR
+                NEW.nome LIKE '%.msi' OR
+                NEW.nome LIKE '%.cmd' THEN
+                    SIGNAL SQLSTATE '45000'
+                    SET MESSAGE_TEXT = ' Arquivos executáveis não são permitidos.';
+                END IF;
+            END$$
+
+            DELIMITER ;
+            """
+        ]    
+            
+        for trigger in triggers:
+            cursor.execute(trigger)
+
+        # CRIAÇÃO DAS PROCEDURES
         procedures = [
 
                 """DROP PROCEDURE IF EXISTS Conta_usuarios""",

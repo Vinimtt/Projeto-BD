@@ -9,7 +9,7 @@ def conectar():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="", # Insira sua senha se estiver usando localmente
+            password="1234", # Insira sua senha se estiver usando localmente
             database="WebDrive"
         )
         if connection.is_connected():
@@ -538,3 +538,80 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def testar_triggers():
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="1234",
+            database="WebDrive"
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+            print("Conectado ao banco de dados WebDrive!")
+
+            # Trigger 1: Testar Safe_security (arquivo proibido)
+            print("\nTestando inserção de arquivo EXE (deve falhar):")
+            try:
+                cursor.execute("""
+                    INSERT INTO arquivo (data_de_ultima_alteracao, url, localizacao, permissao_de_acesso,
+                                         nome, tipo, tamanho, id_usuario)
+                    VALUES ('2025-01-02', 'http://arquivo.exe', 'pasta2', 'privado',
+                            'malware.exe', 'exe', '2KB', 1)
+                """)
+                connection.commit()
+            except Error as e:
+                print("Erro esperado:", e.msg)
+
+            # Trigger 1: Testar Safe_security (arquivo permitido)
+            print("\nTestando inserção de arquivo válido (deve funcionar):")
+            cursor.execute("""
+                INSERT INTO arquivo (data_de_ultima_alteracao, url, localizacao, permissao_de_acesso,
+                                     nome, tipo, tamanho, id_usuario)
+                VALUES ('2025-01-02', 'http://arquivo2.com', 'pasta2', 'privado',
+                        'documento.pdf', 'pdf', '2KB', 1)
+            """)
+            connection.commit()
+            print("Arquivo PDF inserido com sucesso.")
+
+            # Recuperar ID do novo arquivo
+            cursor.execute("SELECT LAST_INSERT_ID()")
+            novo_id = cursor.fetchone()[0]
+
+            # Criar entrada correspondente em atividades_recentes
+            cursor.execute("""
+                INSERT INTO atividades_recentes (id_arquivo, acesso, ultima_versao)
+                VALUES (%s, 'não prioritário', NOW())
+            """, (novo_id,))
+            connection.commit()
+
+            # Trigger 2: Testar Registrar_operacao (update no arquivo)
+            print("\nAtualizando arquivo para acionar trigger Registrar_operacao...")
+            cursor.execute("""
+                UPDATE arquivo
+                SET nome = 'documento_atualizado.pdf'
+                WHERE id = %s
+            """, (novo_id,))
+            connection.commit()
+
+            # Verificar atualização da data em atividades_recentes
+            cursor.execute("""
+                SELECT ultima_versao FROM atividades_recentes
+                WHERE id_arquivo = %s
+            """, (novo_id,))
+            resultado = cursor.fetchone()
+            print("Data de última versão após atualização:", resultado[0])
+
+    except Error as e:
+        print("Erro durante teste:", e)
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("\nConexão encerrada.")
+
+# Executar teste
+testar_triggers()
