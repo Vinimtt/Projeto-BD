@@ -6,7 +6,7 @@ def iniciar_banco():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="2004"
+            password=""
         )
 
         if connection.is_connected():
@@ -93,13 +93,25 @@ def iniciar_banco():
                     senha VARCHAR(100),
                     email VARCHAR(100),
                     data_ingresso VARCHAR(100)
-                )"""
+                )""",
+                """CREATE TABLE IF NOT EXISTS atividades_recentes (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    id_arquivo INT UNIQUE,
+                    acesso VARCHAR(50),
+                    ultima_versao DATETIME,
+                    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
+                ) ENGINE=InnoDB
+            """
+
             ]
+            
+            print("Tabela atividades_recentes criada com sucesso!")
 
             for comando in tabelas:
                 cursor.execute(comando)
 
             print("Todas as tabelas foram criadas com sucesso no banco WebDrive!")
+            print("Tabela atividades_recentes criada com sucesso!")
 
             # Inserir dados de teste em plano
             cursor.execute("INSERT INTO plano (nome, duracao, data_aquisicao, espaco_usuario) VALUES ('Plano Básico', '12 meses', '2025-01-01', 10.0)")
@@ -193,7 +205,7 @@ def configurar_roles():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="2004"
+            password=""
         )
 
         if connection.is_connected():
