@@ -98,7 +98,7 @@ def iniciar_banco():
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     id_arquivo INT UNIQUE,
                     acesso VARCHAR(50),
-                    ultima_versao DATETIME,
+                    ultima_versao DATE,
                     FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
                 ) ENGINE=InnoDB
             """
