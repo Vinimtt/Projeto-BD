@@ -135,73 +135,65 @@ def excluir_admin(connection, id_admin):
     cursor = connection.cursor()
 
     try:
-        cursor.execute("DELETE FROM admin WHERE id = %s", (id_admin,))
+        # Excluir o admin pelo ID
+        cursor.execute("""DELETE FROM Admin WHERE id = %s""", (id_admin,))
+
         connection.commit()
 
         if cursor.rowcount == 0:
-            print(f"\nNenhum registro com ID {id_admin} foi encontrado na tabela 'admin'.")
+            print(f"\nNenhum admin com ID {id_admin} foi encontrado.")
         else:
-            print(f"\nRegistro da tabela 'admin' com ID {id_admin} foi excluído com sucesso.")
-    except Error as erro:
-        print(f"Ocorreu um erro ao remover da tabela 'admin': {erro}")
+            print(f"\nAdmin com ID {id_admin} foi excluído com sucesso.")
+
+    except Exception as erro:
+        print(f"Ocorreu um erro ao excluir o admin: {erro}")
 
 # 2
 def excluir_arquivo(connection, id_arquivo):
     cursor = connection.cursor()
 
     try:
-        # 1. Excluir comentários relacionados
-        cursor.execute("""
-            DELETE FROM comentario WHERE id_arquivo = %s
-        """, (id_arquivo,))
+        # 1. Desvincular compartilhamentos relacionados
+        cursor.execute("""UPDATE compartilhamento SET id_arquivo = NULL WHERE id_arquivo = %s""", (id_arquivo,))
 
-        # 2. Excluir compartilhamentos relacionados
-        cursor.execute("""
-            DELETE FROM compartilhamento WHERE id_arquivo = %s
-        """, (id_arquivo,))
+        # 2. Desvincular comentários relacionados
+        cursor.execute("""UPDATE comentario SET id_arquivo = NULL WHERE id_arquivo = %s""", (id_arquivo,))
 
-        # 3. Excluir registros de "possui"
-        cursor.execute("""
-            DELETE FROM possui WHERE id_arquivo = %s
-        """, (id_arquivo,))
+        # 3. Desvincular histórico de versionamento
+        cursor.execute("""UPDATE historico_de_versionamento SET id_arquivo = NULL WHERE id_arquivo = %s""", (id_arquivo,))
 
-        # 4. Excluir histórico de versionamento
-        cursor.execute("""
-            DELETE FROM historico_de_versionamento WHERE id_arquivo = %s
-        """, (id_arquivo,))
+        # 4. Excluir atividade recente (id_arquivo é UNIQUE)
+        cursor.execute("""DELETE FROM atividades_recentes WHERE id_arquivo = %s""", (id_arquivo,))
 
         # 5. Excluir o próprio arquivo
-        cursor.execute("""
-            DELETE FROM arquivo WHERE id = %s
-        """, (id_arquivo,))
+        cursor.execute("""DELETE FROM arquivo WHERE id = %s""", (id_arquivo,))
 
         connection.commit()
 
         if cursor.rowcount == 0:
-            print(f"\nNenhum registro com ID {id_arquivo} foi encontrado na tabela 'arquivo'.")
+            print(f"\nNenhum arquivo com ID {id_arquivo} foi encontrado.")
         else:
-            print(f"\nArquivo com ID {id_arquivo} e suas dependências foram excluídos com sucesso.")
-    
-    except Error as erro:
-        print(f"Ocorreu um erro ao excluir o arquivo e suas dependências: {erro}")
+            print(f"\nArquivo com ID {id_arquivo} foi excluído. Registros relacionados foram desvinculados ou removidos.")
+
+    except Exception as erro:
+        print(f"Ocorreu um erro ao excluir o arquivo: {erro}")
 
 # 3
 def excluir_comentario(connection, id_comentario):
     cursor = connection.cursor()
 
     try:
-        cursor.execute("""
-            DELETE FROM comentario WHERE id = %s
-        """, (id_comentario,))
-        
+        # Excluir o comentário
+        cursor.execute("""DELETE FROM comentario WHERE id = %s""", (id_comentario,))
+
         connection.commit()
 
         if cursor.rowcount == 0:
             print(f"\nNenhum comentário com ID {id_comentario} foi encontrado.")
         else:
             print(f"\nComentário com ID {id_comentario} foi excluído com sucesso.")
-    
-    except Error as erro:
+
+    except Exception as erro:
         print(f"Ocorreu um erro ao excluir o comentário: {erro}")
 
 # 4
@@ -209,37 +201,35 @@ def excluir_compartilhamento(connection, id_compartilhamento):
     cursor = connection.cursor()
 
     try:
-        cursor.execute("""
-            DELETE FROM compartilhamento WHERE id_compartilhamento = %s
-        """, (id_compartilhamento,))
-        
+        # Excluir o compartilhamento
+        cursor.execute("""DELETE FROM compartilhamento WHERE id_compartilhamento = %s""", (id_compartilhamento,))
+
         connection.commit()
 
         if cursor.rowcount == 0:
             print(f"\nNenhum compartilhamento com ID {id_compartilhamento} foi encontrado.")
         else:
             print(f"\nCompartilhamento com ID {id_compartilhamento} foi excluído com sucesso.")
-    
-    except Error as erro:
+
+    except Exception as erro:
         print(f"Ocorreu um erro ao excluir o compartilhamento: {erro}")
 
 # 5
-def excluir_historico_de_versionamento(connection, id_historico_de_versionamento):
+def excluir_historico_de_versionamento(connection, id_historico):
     cursor = connection.cursor()
 
     try:
-        cursor.execute("""
-            DELETE FROM historico_de_versionamento WHERE id_historico = %s
-        """, (id_historico_de_versionamento,))
-        
+        # Excluir o histórico de versionamento
+        cursor.execute("""DELETE FROM historico_de_versionamento WHERE id_historico = %s""", (id_historico,))
+
         connection.commit()
 
         if cursor.rowcount == 0:
-            print(f"\nNenhum histórico com ID {id_historico_de_versionamento} foi encontrado.")
+            print(f"\nNenhum histórico com ID {id_historico} foi encontrado.")
         else:
-            print(f"\nHistórico com ID {id_historico_de_versionamento} foi excluído com sucesso.")
-    
-    except Error as erro:
+            print(f"\nHistórico com ID {id_historico} foi excluído com sucesso.")
+
+    except Exception as erro:
         print(f"Ocorreu um erro ao excluir o histórico de versionamento: {erro}")
 
 # 6
@@ -247,59 +237,18 @@ def excluir_instituicao(connection, id_instituicao):
     cursor = connection.cursor()
 
     try:
-        # Excluir compartilhamentos envolvendo usuários da instituição
-        cursor.execute("""
-            DELETE FROM compartilhamento
-            WHERE id_user_send IN (
-                SELECT id FROM usuario WHERE id_instituicao = %s
-            )
-            OR id_user_receive IN (
-                SELECT id FROM usuario WHERE id_instituicao = %s
-            )
-        """, (id_instituicao, id_instituicao))
+        # Tornar NULL em usuários que pertencem à instituição
+        cursor.execute("""UPDATE usuario SET id_instituicao = NULL WHERE id_instituicao = %s""", (id_instituicao,))
 
-        # Excluir comentários de usuários da instituição
-        cursor.execute("""
-            DELETE FROM comentario
-            WHERE id_usuario IN (
-                SELECT id FROM usuario WHERE id_instituicao = %s
-            )
-        """, (id_instituicao,))
-
-        # Excluir histórico de versionamento de usuários da instituição
-        cursor.execute("""
-            DELETE FROM historico_de_versionamento
-            WHERE id_usuario IN (
-                SELECT id FROM usuario WHERE id_instituicao = %s
-            )
-        """, (id_instituicao,))
-
-        # Excluir registros em 'possui' vinculados a usuários da instituição
-        cursor.execute("""
-            DELETE FROM possui
-            WHERE id_usuario IN (
-                SELECT id FROM usuario WHERE id_instituicao = %s
-            )
-        """, (id_instituicao,))
-
-        # Excluir os próprios usuários
-        cursor.execute("""
-            DELETE FROM usuario
-            WHERE id_instituicao = %s
-        """, (id_instituicao,))
-
-        # Excluir a própria instituição
-        cursor.execute("""
-            DELETE FROM instituicao
-            WHERE id = %s
-        """, (id_instituicao,))
+        # Excluir a instituição em si
+        cursor.execute("""DELETE FROM instituicao WHERE id = %s""", (id_instituicao,))
 
         connection.commit()
 
         if cursor.rowcount == 0:
             print(f"\nNenhuma instituição com ID {id_instituicao} foi encontrada.")
         else:
-            print(f"\nInstituição com ID {id_instituicao} e suas dependências foram excluídas com sucesso.")
+            print(f"\nInstituição com ID {id_instituicao} foi excluída. Registros relacionados foram desvinculados.")
 
     except Error as erro:
         print(f"Ocorreu um erro ao excluir a instituição: {erro}")
@@ -308,101 +257,58 @@ def excluir_instituicao(connection, id_instituicao):
 def excluir_plano(connection, id_plano):
     cursor = connection.cursor()
 
-    # Passo 1: apagar dependências em ordem segura
-    cursor.execute("""
-        DELETE FROM compartilhamento 
-        WHERE id_user_send IN (
-            SELECT id FROM usuario WHERE id_instituicao IN (
-                SELECT id FROM instituicao WHERE id_plano = %s
-            )
-        )
-        OR id_user_receive IN (
-            SELECT id FROM usuario WHERE id_instituicao IN (
-                SELECT id FROM instituicao WHERE id_plano = %s
-            )
-        )
-    """, (id_plano, id_plano))
+    try:
+        # 1. Desvincular instituições que utilizam este plano
+        cursor.execute("""UPDATE instituicao SET id_plano = NULL WHERE id_plano = %s""", (id_plano,))
 
-    cursor.execute("""
-        DELETE FROM comentario
-        WHERE id_usuario IN (
-            SELECT id FROM usuario WHERE id_instituicao IN (
-                SELECT id FROM instituicao WHERE id_plano = %s
-            )
-        )
-    """, (id_plano,))
+        # 2. Excluir o plano
+        cursor.execute("""DELETE FROM plano WHERE id = %s""", (id_plano,))
 
-    cursor.execute("""
-        DELETE FROM historico_de_versionamento
-        WHERE id_usuario IN (
-            SELECT id FROM usuario WHERE id_instituicao IN (
-                SELECT id FROM instituicao WHERE id_plano = %s
-            )
-        )
-    """, (id_plano,))
+        connection.commit()
 
-    cursor.execute("""
-        DELETE FROM possui
-        WHERE id_usuario IN (
-            SELECT id FROM usuario WHERE id_instituicao IN (
-                SELECT id FROM instituicao WHERE id_plano = %s
-            )
-        )
-    """, (id_plano,))
+        if cursor.rowcount == 0:
+            print(f"\nNenhum plano com ID {id_plano} foi encontrado.")
+        else:
+            print(f"\nPlano com ID {id_plano} foi excluído. Instituições relacionadas foram desvinculadas.")
 
-    cursor.execute("""
-        DELETE FROM usuario
-        WHERE id_instituicao IN (
-            SELECT id FROM instituicao WHERE id_plano = %s
-        )
-    """, (id_plano,))
-
-    cursor.execute("DELETE FROM instituicao WHERE id_plano = %s", (id_plano,))
-    cursor.execute("DELETE FROM plano WHERE id = %s", (id_plano,))
-    connection.commit()
-    print(f"\nPlano com ID {id_plano} e suas dependências foram excluídos.")
+    except Exception as erro:
+        print(f"Ocorreu um erro ao excluir o plano: {erro}")
 
 # 8
 def excluir_usuario(connection, id_usuario):
     cursor = connection.cursor()
 
     try:
-        # Passo 1: apagar dependências em ordem segura
-        cursor.execute("""
-            DELETE FROM compartilhamento
-            WHERE id_user_send = %s OR id_user_receive = %s
-        """, (id_usuario, id_usuario))
+        # 1. Desvincular arquivos do usuário
+        cursor.execute("""UPDATE arquivo SET id_usuario = NULL WHERE id_usuario = %s""", (id_usuario,))
 
-        cursor.execute("""
-            DELETE FROM comentario
-            WHERE id_usuario = %s
-        """, (id_usuario,))
+        # 2. Desvincular compartilhamentos enviados
+        cursor.execute("""UPDATE compartilhamento SET id_user_send = NULL WHERE id_user_send = %s""", (id_usuario,))
 
-        cursor.execute("""
-            DELETE FROM historico_de_versionamento
-            WHERE id_usuario = %s OR id_usuario_que_alterou = %s
-        """, (id_usuario, id_usuario))
+        # 3. Desvincular compartilhamentos recebidos
+        cursor.execute("""UPDATE compartilhamento SET id_user_receive = NULL WHERE id_user_receive = %s""", (id_usuario,))
 
-        cursor.execute("""
-            DELETE FROM possui
-            WHERE id_usuario = %s
-        """, (id_usuario,))
+        # 4. Desvincular comentários do usuário
+        cursor.execute("""UPDATE comentario SET id_usuario = NULL WHERE id_usuario = %s""", (id_usuario,))
 
-        # Passo 2: remover o próprio usuário
-        cursor.execute("""
-            DELETE FROM usuario
-            WHERE id = %s
-        """, (id_usuario,))
+        # 5. Desvincular históricos de versionamento (usuário dono)
+        cursor.execute("""UPDATE historico_de_versionamento SET id_usuario = NULL WHERE id_usuario = %s""", (id_usuario,))
+
+        # 6. Desvincular históricos de versionamento (usuário que alterou)
+        cursor.execute("""UPDATE historico_de_versionamento SET id_usuario_que_alterou = NULL WHERE id_usuario_que_alterou = %s""", (id_usuario,))
+
+        # 7. Excluir o usuário
+        cursor.execute("""DELETE FROM usuario WHERE id = %s""", (id_usuario,))
 
         connection.commit()
 
         if cursor.rowcount == 0:
-            print(f"\nNenhum usuário encontrado com ID {id_usuario}.")
+            print(f"\nNenhum usuário com ID {id_usuario} foi encontrado.")
         else:
-            print(f"\nUsuário com ID {id_usuario} e suas dependências foram removidos com sucesso.")
+            print(f"\nUsuário com ID {id_usuario} foi excluído. Registros relacionados foram desvinculados.")
 
-    except Error as erro:
-        print(f"Ocorreu um erro ao excluir o usuário {id_usuario}: {erro}")
+    except Exception as erro:
+        print(f"Ocorreu um erro ao excluir o usuário: {erro}")
 
 # Submenu de operações
 def submenu(connection, tabela):
