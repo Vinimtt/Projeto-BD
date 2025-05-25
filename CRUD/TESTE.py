@@ -1,247 +1,540 @@
 import mysql.connector
 from mysql.connector import Error
+from auxiliar import iniciar_banco
 
-def iniciar_banco():
+# Conexão
+def conectar():
+
     try:
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="", # Insira sua senha se estiver usando localmente
+            database="WebDrive"
         )
-
         if connection.is_connected():
-            print("Conectado ao MySQL com sucesso!")
-            cursor = connection.cursor()
-
-            # Criar banco de dados
-            cursor.execute("CREATE DATABASE IF NOT EXISTS WebDrive")
-            cursor.execute("USE WebDrive")
-
-            # Criação das tabelas
-            tabelas = [
-                """CREATE TABLE IF NOT EXISTS plano (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    nome VARCHAR(100),
-                    duracao VARCHAR(100),
-                    data_aquisicao VARCHAR(100),
-                    espaco_usuario DOUBLE
-                )""",
-                """CREATE TABLE IF NOT EXISTS instituicao (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    nome VARCHAR(100),
-                    causa_social VARCHAR(100),
-                    endereco VARCHAR(100),
-                    id_plano INT,
-                    FOREIGN KEY (id_plano) REFERENCES plano(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS usuario (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    login VARCHAR(100),
-                    senha VARCHAR(100),
-                    email VARCHAR(100),
-                    data_ingresso VARCHAR(100),
-                    id_instituicao INT,
-                    FOREIGN KEY (id_instituicao) REFERENCES instituicao(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS arquivo (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    data_de_ultima_alteracao VARCHAR(100),
-                    url VARCHAR(100),
-                    localizacao VARCHAR(100),
-                    permissao_de_acesso VARCHAR(100),
-                    nome VARCHAR(100),
-                    tipo VARCHAR(100),
-                    tamanho VARCHAR(100),
-                    id_usuario INT,
-                    FOREIGN KEY (id_usuario) REFERENCES usuario(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS compartilhamento (
-                    id_compartilhamento INT PRIMARY KEY AUTO_INCREMENT,
-                    data_compartilhamento VARCHAR(100),
-                    id_arquivo INT,
-                    id_user_send INT,
-                    id_user_receive INT,
-                    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id),
-                    FOREIGN KEY (id_user_send) REFERENCES usuario(id),
-                    FOREIGN KEY (id_user_receive) REFERENCES usuario(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS comentario (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    conteudo VARCHAR(100),
-                    data VARCHAR(100),
-                    hora VARCHAR(100),
-                    id_usuario INT,
-                    id_arquivo INT,
-                    FOREIGN KEY (id_usuario) REFERENCES usuario(id),
-                    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS historico_de_versionamento (
-                    id_historico INT PRIMARY KEY AUTO_INCREMENT,
-                    data VARCHAR(100),
-                    hora VARCHAR(100),
-                    operacao VARCHAR(100),
-                    id_usuario INT,
-                    id_usuario_que_alterou INT,
-                    conteudo_alterado VARCHAR(100),
-                    id_arquivo INT,
-                    FOREIGN KEY (id_usuario) REFERENCES usuario(id),
-                    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
-                )""",
-                """CREATE TABLE IF NOT EXISTS Admin (
-                    id INT PRIMARY KEY AUTO_INCREMENT,
-                    login VARCHAR(100),
-                    senha VARCHAR(100),
-                    email VARCHAR(100),
-                    data_ingresso VARCHAR(100)
-                )""",
-                """CREATE TABLE IF NOT EXISTS atividades_recentes (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    id_arquivo INT UNIQUE,
-                    acesso VARCHAR(50),
-                    ultima_versao DATETIME,
-                    FOREIGN KEY (id_arquivo) REFERENCES arquivo(id)
-                ) ENGINE=InnoDB
-            """
-
-            ]
-            
-            print("Tabela atividades_recentes criada com sucesso!")
-
-            for comando in tabelas:
-                cursor.execute(comando)
-
-            print("Todas as tabelas foram criadas com sucesso no banco WebDrive!")
-            print("Tabela atividades_recentes criada com sucesso!")
-
-            # Inserir dados de teste em plano
-            cursor.execute("INSERT INTO plano (nome, duracao, data_aquisicao, espaco_usuario) VALUES ('Plano Básico', '12 meses', '2025-01-01', 10.0)")
-
-            # Inserir dados de teste em instituicao
-            cursor.execute("INSERT INTO instituicao (nome, causa_social, endereco, id_plano) VALUES ('Instituto ABC', 'Educação', 'Rua X', 1)")
-
-            # Inserir dados de teste em usuario
-            cursor.execute("INSERT INTO usuario (login, senha, email, data_ingresso, id_instituicao) VALUES ('user1', '1234', 'user1@email.com', '2025-01-01', 1)")
-
-            # Inserir dados de teste em arquivo
-            cursor.execute("INSERT INTO arquivo (data_de_ultima_alteracao, url, localizacao, permissao_de_acesso, nome, tipo, tamanho, id_usuario) VALUES ('2025-01-01', 'http://arquivo.com', 'pasta1', 'privado', 'arquivo1', 'txt', '1KB', 1)")
-
-            # Inserir dados de teste em compartilhamento
-            cursor.execute("INSERT INTO compartilhamento (data_compartilhamento, id_arquivo, id_user_send, id_user_receive) VALUES ('2025-01-01', 1, 1, 1)")
-
-            # Inserir dados de teste em comentario
-            cursor.execute("INSERT INTO comentario (conteudo, data, hora, id_usuario, id_arquivo) VALUES ('Comentário teste', '2025-01-01', '10:00', 1, 1)")
-
-            # Inserir dados de teste em historico_de_versionamento
-            cursor.execute("INSERT INTO historico_de_versionamento (data, hora, operacao, id_usuario, id_usuario_que_alterou, conteudo_alterado, id_arquivo) VALUES ('2025-01-01', '10:00', 'Criação', 1, 1, 'Novo Conteúdo', 1)")
-
-            # Inserir dados de teste em Admin
-            cursor.execute("INSERT INTO Admin (login, senha, email, data_ingresso) VALUES ('admin', 'admin123', 'admin@webdrive.com', '2025-01-01')")
-
-            connection.commit()
-            print("Dados de teste inseridos com sucesso!")
-            
-            
-            # CRIAÇÃO DAS PROCEDURES
-
-        procedures = [
-
-                """DROP PROCEDURE IF EXISTS Conta_usuarios""",
-                """CREATE PROCEDURE Conta_usuarios(IN p_id_arq INT)
-                BEGIN
-                    DECLARE v_cont INT DEFAULT 0;
-                    SELECT COUNT(DISTINCT u.id_usuario) INTO v_cont
-                    FROM (
-                        SELECT id_user_send AS id_usuario FROM compartilhamento WHERE id_arquivo = p_id_arq
-                        UNION
-                        SELECT id_user_receive AS id_usuario FROM compartilhamento WHERE id_arquivo = p_id_arq
-                    ) AS u;
-                    SELECT v_cont AS qtd_usuarios_com_acesso;
-                END""",
-
-                """DROP PROCEDURE IF EXISTS Chavear""",
-                """CREATE PROCEDURE Chavear(IN p_id_arq INT)
-                BEGIN
-                    INSERT INTO atividades_recentes (id_arquivo, acesso, ultima_versao)
-                    VALUES (p_id_arq, 'prioritário', NOW())
-                    ON DUPLICATE KEY UPDATE
-                        acesso = IF(acesso = 'prioritário', 'não prioritário', 'prioritário'),
-                        ultima_versao = NOW();
-                    SELECT CONCAT('Acesso do arquivo ', p_id_arq, ' alterado.') AS status_alteracao;
-                END""",
-
-                """DROP PROCEDURE IF EXISTS Verificar_atividades""",
-                """CREATE PROCEDURE Verificar_atividades()
-                BEGIN
-                    UPDATE atividades_recentes
-                    SET ultima_versao = NOW();
-                    SELECT 'Ultima versão atualizada.' AS resultado;
-                END""",
-
-                """DROP PROCEDURE IF EXISTS Remover_acessos""",
-                """CREATE PROCEDURE Remover_acessos(IN p_id_arq INT)
-                BEGIN
-                    DELETE FROM compartilhamento
-                    WHERE id_arquivo = p_id_arq;
-                    SELECT CONCAT('Acessos do arquivo ', p_id_arq, ' removidos.') AS resultado;
-                END"""
-            ]
-
-        for proc in procedures:
-                cursor.execute(proc)
-
-        print("Procedures criadas com sucesso!")
-
+            print("Conectado ao banco WebDrive.")
+            return connection
     except Error as e:
-        print("Erro ao executar:", e)
+        print("Erro ao conectar:", e)
+    return None
 
-    finally:
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("Conexão encerrada.")
+def inserir(connection, tabela):
+    cursor = connection.cursor()
 
-def configurar_roles():
+    # 1. Obter colunas
     try:
-        connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password=""
-        )
+        cursor.execute(f"SELECT * FROM {tabela} LIMIT 0") # obtem metadados
+        colunas = []
+        # cursor.description retorna info. sobre as colunas
+        for desc in cursor.description: 
+            colunas.append(desc[0])
+        cursor.fetchall()  # Limpa resultados pendentes do SELECT
+    except Error as e:
+        print(f"Ocorreu um erro em obter as colunas da tabela {tabela}: {e}")
+        return
 
-        if connection.is_connected():
-            print("Configurando roles e usuários...")
-            cursor = connection.cursor()
+    # 2. Coletar dados do usuário
+    valores = []
+    print(f"\nInsira os valores para a tabela '{tabela}':")
+    for col in colunas[1:]:  # Ignora a coluna 0 (PK auto_increment)
+        valor = input(f"- {col}: ").strip()
+        # Convertendo valores para int ou float caso precise
+        if valor.isdigit():
+            valor = int(valor)
+        else:
+            try:
+                valor = float(valor)
+            except ValueError:
+                pass
+        valores.append(valor) # Adiciona em valores[]
 
-            # PapelAdm
-            cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelAdm'")
-            cursor.execute("GRANT SELECT, INSERT, UPDATE, DELETE ON WebDrive.* TO 'PapelAdm'")
-            cursor.execute("CREATE USER IF NOT EXISTS 'administrador'@'localhost' IDENTIFIED BY 'adm123'")
-            cursor.execute("GRANT 'PapelAdm' TO 'administrador'@'localhost'")
-            cursor.execute("SET DEFAULT ROLE 'PapelAdm' TO 'administrador'@'localhost'")
+    # 3. Inserir no banco
+    placeholders = ', '.join(['%s'] * len(valores))
+    sql = f"INSERT INTO {tabela} ({', '.join(colunas[1:])}) VALUES ({placeholders})" # codigo 'em sql' para inserir
 
-            # PapelEmpresa
-            cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelEmpresa'")
-            cursor.execute("GRANT SELECT ON WebDrive.usuario TO 'PapelEmpresa'")
-            cursor.execute("GRANT SELECT ON WebDrive.arquivo TO 'PapelEmpresa'")
-            cursor.execute("CREATE USER IF NOT EXISTS 'empresa'@'localhost' IDENTIFIED BY 'empresa123'")
-            cursor.execute("GRANT 'PapelEmpresa' TO 'empresa'@'localhost'")
-            cursor.execute("SET DEFAULT ROLE 'PapelEmpresa' TO 'empresa'@'localhost'")
+    try:
+        cursor.execute(sql, valores)
+        connection.commit()
+        print(f"\nRegistro inserido com sucesso na tabela '{tabela}'.")
+    except Error as e:
+        print(f"Ocorreu um erro na inserção da tabela {tabela}: {e}")
 
-            # falta terminar ainda
-            cursor.execute("CREATE ROLE IF NOT EXISTS 'PapelUsuario'")
-            cursor.execute("GRANT SELECT, INSERT, UPDATE ON WebDrive.arquivo TO 'PapelUsuario'")
-            cursor.execute("CREATE USER IF NOT EXISTS 'usuario'@'localhost' IDENTIFIED BY 'usuario123'")
-            cursor.execute("GRANT 'PapelUsuario' TO 'usuario'@'localhost'")
-            cursor.execute("SET DEFAULT ROLE 'PapelUsuario' TO 'usuario'@'localhost'")
 
-            cursor.execute("FLUSH PRIVILEGES")
-            print("Roles e usuários configurados com sucesso!")
+def ler(connection, tabela):
+
+    cursor = connection.cursor()
+    sql = f"SELECT * FROM {tabela}"
+
+    try:
+        cursor.execute(sql)
+        resultados = cursor.fetchall()
+
+        # Obtem os nomes das colunas
+        colunas = [desc[0] for desc in cursor.description]
+
+        print(f"\nRegistros da tabela {tabela}:\n")
+        print(" | ".join(colunas))  # Imprime cabeçalho com separador
+
+        for linha in resultados:
+            print(" | ".join(str(campo) for campo in linha))
 
     except Error as e:
-        print("Erro ao configurar roles:", e)
+        print(f"Erro ao ler tabela {tabela}:", e)
 
-    finally:
-        if 'connection' in locals() and connection.is_connected():
-            cursor.close()
-            connection.close()
-            print("Conexão encerrada.")
+def atualizar(connection, nome_tabela):
+    cursor = connection.cursor()
+
+    # 1. Obter os nomes das colunas da tabela
+    try:
+        cursor.execute(f"SELECT * FROM {nome_tabela} LIMIT 0")
+        nomes_colunas = [descricao[0] for descricao in cursor.description]
+        cursor.fetchall()
+    except Error as erro:
+        print(f"Ocorreu um erro ao obter as colunas da tabela '{nome_tabela}': {erro}")
+        return
+
+    # 2. Perguntar qual ID será utilizado na atualização
+    id_coluna = nomes_colunas[0]  # Assume que a primeira coluna é o ID
+    id_valor = input(f"- Informe o valor de '{id_coluna}' do registro a ser atualizado: ").strip()
+    if id_valor.isdigit():
+        id_valor = int(id_valor)
+    else:
+        try:
+            id_valor = float(id_valor)
+        except ValueError:
+            pass  # permanece como string
+
+    # 3. Coletar qual coluna será atualizada e a nova informação
+    nome_coluna = input("- Informe o nome da coluna que deseja atualizar: ").strip()
+    if nome_coluna not in nomes_colunas:
+        print(f"Coluna '{nome_coluna}' não existe na tabela '{nome_tabela}'.")
+        return
+
+    nova_info = input(f"- Informe o novo valor para a coluna '{nome_coluna}': ").strip()
+    if nova_info.isdigit():
+        nova_info = int(nova_info)
+    else:
+        try:
+            nova_info = float(nova_info)
+        except ValueError:
+            pass  # permanece como string
+
+    # 4. Executar o UPDATE no banco de dados
+    sql_update = f"UPDATE {nome_tabela} SET {nome_coluna} = %s WHERE {id_coluna} = %s"
+
+    try:
+        cursor.execute(sql_update, (nova_info, id_valor))
+        connection.commit()
+        print(f"\nRegistro com {id_coluna} = {id_valor} atualizado com sucesso na tabela '{nome_tabela}'.")
+    except Error as erro:
+        print(f"Ocorreu um erro ao atualizar a tabela '{nome_tabela}': {erro}")
+
+# 1
+def excluir_admin(connection, id_admin):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("DELETE FROM admin WHERE id = %s", (id_admin,))
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum registro com ID {id_admin} foi encontrado na tabela 'admin'.")
+        else:
+            print(f"\nRegistro da tabela 'admin' com ID {id_admin} foi excluído com sucesso.")
+    except Error as erro:
+        print(f"Ocorreu um erro ao remover da tabela 'admin': {erro}")
+
+# 2
+def excluir_arquivo(connection, id_arquivo):
+    cursor = connection.cursor()
+
+    try:
+        # 1. Excluir comentários relacionados
+        cursor.execute("""
+            DELETE FROM comentario WHERE id_arquivo = %s
+        """, (id_arquivo,))
+
+        # 2. Excluir compartilhamentos relacionados
+        cursor.execute("""
+            DELETE FROM compartilhamento WHERE id_arquivo = %s
+        """, (id_arquivo,))
+
+        # 3. Excluir registros de "possui"
+        cursor.execute("""
+            DELETE FROM possui WHERE id_arquivo = %s
+        """, (id_arquivo,))
+
+        # 4. Excluir histórico de versionamento
+        cursor.execute("""
+            DELETE FROM historico_de_versionamento WHERE id_arquivo = %s
+        """, (id_arquivo,))
+
+        # 5. Excluir o próprio arquivo
+        cursor.execute("""
+            DELETE FROM arquivo WHERE id = %s
+        """, (id_arquivo,))
+
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum registro com ID {id_arquivo} foi encontrado na tabela 'arquivo'.")
+        else:
+            print(f"\nArquivo com ID {id_arquivo} e suas dependências foram excluídos com sucesso.")
+    
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir o arquivo e suas dependências: {erro}")
+
+# 3
+def excluir_comentario(connection, id_comentario):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM comentario WHERE id = %s
+        """, (id_comentario,))
+        
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum comentário com ID {id_comentario} foi encontrado.")
+        else:
+            print(f"\nComentário com ID {id_comentario} foi excluído com sucesso.")
+    
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir o comentário: {erro}")
+
+# 4
+def excluir_compartilhamento(connection, id_compartilhamento):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM compartilhamento WHERE id_compartilhamento = %s
+        """, (id_compartilhamento,))
+        
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum compartilhamento com ID {id_compartilhamento} foi encontrado.")
+        else:
+            print(f"\nCompartilhamento com ID {id_compartilhamento} foi excluído com sucesso.")
+    
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir o compartilhamento: {erro}")
+
+# 5
+def excluir_historico_de_versionamento(connection, id_historico_de_versionamento):
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            DELETE FROM historico_de_versionamento WHERE id_historico = %s
+        """, (id_historico_de_versionamento,))
+        
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum histórico com ID {id_historico_de_versionamento} foi encontrado.")
+        else:
+            print(f"\nHistórico com ID {id_historico_de_versionamento} foi excluído com sucesso.")
+    
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir o histórico de versionamento: {erro}")
+
+# 6
+def excluir_instituicao(connection, id_instituicao):
+    cursor = connection.cursor()
+
+    try:
+        # Excluir compartilhamentos envolvendo usuários da instituição
+        cursor.execute("""
+            DELETE FROM compartilhamento
+            WHERE id_user_send IN (
+                SELECT id FROM usuario WHERE id_instituicao = %s
+            )
+            OR id_user_receive IN (
+                SELECT id FROM usuario WHERE id_instituicao = %s
+            )
+        """, (id_instituicao, id_instituicao))
+
+        # Excluir comentários de usuários da instituição
+        cursor.execute("""
+            DELETE FROM comentario
+            WHERE id_usuario IN (
+                SELECT id FROM usuario WHERE id_instituicao = %s
+            )
+        """, (id_instituicao,))
+
+        # Excluir histórico de versionamento de usuários da instituição
+        cursor.execute("""
+            DELETE FROM historico_de_versionamento
+            WHERE id_usuario IN (
+                SELECT id FROM usuario WHERE id_instituicao = %s
+            )
+        """, (id_instituicao,))
+
+        # Excluir registros em 'possui' vinculados a usuários da instituição
+        cursor.execute("""
+            DELETE FROM possui
+            WHERE id_usuario IN (
+                SELECT id FROM usuario WHERE id_instituicao = %s
+            )
+        """, (id_instituicao,))
+
+        # Excluir os próprios usuários
+        cursor.execute("""
+            DELETE FROM usuario
+            WHERE id_instituicao = %s
+        """, (id_instituicao,))
+
+        # Excluir a própria instituição
+        cursor.execute("""
+            DELETE FROM instituicao
+            WHERE id = %s
+        """, (id_instituicao,))
+
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhuma instituição com ID {id_instituicao} foi encontrada.")
+        else:
+            print(f"\nInstituição com ID {id_instituicao} e suas dependências foram excluídas com sucesso.")
+
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir a instituição: {erro}")
+
+# 7
+def excluir_plano(connection, id_plano):
+    cursor = connection.cursor()
+
+    # Passo 1: apagar dependências em ordem segura
+    cursor.execute("""
+        DELETE FROM compartilhamento 
+        WHERE id_user_send IN (
+            SELECT id FROM usuario WHERE id_instituicao IN (
+                SELECT id FROM instituicao WHERE id_plano = %s
+            )
+        )
+        OR id_user_receive IN (
+            SELECT id FROM usuario WHERE id_instituicao IN (
+                SELECT id FROM instituicao WHERE id_plano = %s
+            )
+        )
+    """, (id_plano, id_plano))
+
+    cursor.execute("""
+        DELETE FROM comentario
+        WHERE id_usuario IN (
+            SELECT id FROM usuario WHERE id_instituicao IN (
+                SELECT id FROM instituicao WHERE id_plano = %s
+            )
+        )
+    """, (id_plano,))
+
+    cursor.execute("""
+        DELETE FROM historico_de_versionamento
+        WHERE id_usuario IN (
+            SELECT id FROM usuario WHERE id_instituicao IN (
+                SELECT id FROM instituicao WHERE id_plano = %s
+            )
+        )
+    """, (id_plano,))
+
+    cursor.execute("""
+        DELETE FROM possui
+        WHERE id_usuario IN (
+            SELECT id FROM usuario WHERE id_instituicao IN (
+                SELECT id FROM instituicao WHERE id_plano = %s
+            )
+        )
+    """, (id_plano,))
+
+    cursor.execute("""
+        DELETE FROM usuario
+        WHERE id_instituicao IN (
+            SELECT id FROM instituicao WHERE id_plano = %s
+        )
+    """, (id_plano,))
+
+    cursor.execute("DELETE FROM instituicao WHERE id_plano = %s", (id_plano,))
+    cursor.execute("DELETE FROM plano WHERE id = %s", (id_plano,))
+    connection.commit()
+    print(f"\nPlano com ID {id_plano} e suas dependências foram excluídos.")
+
+# 8
+def excluir_usuario(connection, id_usuario):
+    cursor = connection.cursor()
+
+    try:
+        # Passo 1: apagar dependências em ordem segura
+        cursor.execute("""
+            DELETE FROM compartilhamento
+            WHERE id_user_send = %s OR id_user_receive = %s
+        """, (id_usuario, id_usuario))
+
+        cursor.execute("""
+            DELETE FROM comentario
+            WHERE id_usuario = %s
+        """, (id_usuario,))
+
+        cursor.execute("""
+            DELETE FROM historico_de_versionamento
+            WHERE id_usuario = %s OR id_usuario_que_alterou = %s
+        """, (id_usuario, id_usuario))
+
+        cursor.execute("""
+            DELETE FROM possui
+            WHERE id_usuario = %s
+        """, (id_usuario,))
+
+        # Passo 2: remover o próprio usuário
+        cursor.execute("""
+            DELETE FROM usuario
+            WHERE id = %s
+        """, (id_usuario,))
+
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            print(f"\nNenhum usuário encontrado com ID {id_usuario}.")
+        else:
+            print(f"\nUsuário com ID {id_usuario} e suas dependências foram removidos com sucesso.")
+
+    except Error as erro:
+        print(f"Ocorreu um erro ao excluir o usuário {id_usuario}: {erro}")
+
+# Submenu de operações
+def submenu(connection, tabela):
+
+    while True:
+        print(f"\n===== OPERACOES TABELA {tabela.upper()} =====\n")
+        print("1 - Inserir")
+        print("2 - Ler")
+        print("3 - Atualizar")
+        print("4 - Deletar")
+        print("0 - Voltar ao menu principal")
+        print("\n==============================================\n")
+        opcao = input("Escolha uma opção: ")
+
+        match opcao:
+            case '1':
+                inserir(connection, tabela)
+            case '2':
+                ler(connection, tabela)
+            case '3':
+                atualizar(connection, tabela)
+            case '4':
+                print(f"\n============= OPERACOES TABELA =============\n")
+                print("Escolha a tabela para realizar remoção:")
+                print("1 - Admin")
+                print("2 - Arquivo")
+                print("3 - Comentário")
+                print("4 - Compartilhamento")
+                print("5 - Histórico de versionameto")
+                print("6 - Instituição")
+                print("7 - Plano")
+                print("8 - Usuários")
+                print("0 - Sair")
+                print("\n==============================================\n")
+                table = input('Insira a tabela que voce deseja realizar a remoção: ')
+                match table:
+                    case '1':
+                        ler(connection, "admin")
+                        id_admin = input('\nInsira o ID da tabela admin que voce deseja remover: ')
+                        excluir_admin(connection, id_admin)
+                    case '2':
+                        ler(connection, "arquivo")
+                        id_arquivo = input('\nInsira o ID da tabela arquivo que voce deseja remover: ')
+                        excluir_arquivo(connection, id_arquivo)
+                    case '3':
+                        ler(connection, "comentario")
+                        id_comentario = input('\nInsira o ID da tabela comentario que voce deseja remover: ')
+                        excluir_comentario(connection, id_comentario)
+                    case '4':
+                        ler(connection, "compartilhamento")
+                        id_compartilhamento = input('\nInsira o ID da tabela compartilhamento que voce deseja remover: ')
+                        excluir_compartilhamento(connection, id_compartilhamento)
+                    case '5':
+                        ler(connection, "historico_de_versionamento")
+                        id_historico_de_versionamento = input('\nInsira o ID da tabela historico_de_versionamento que voce deseja remover: ')
+                        excluir_historico_de_versionamento(connection, id_historico_de_versionamento)
+                    case '6':
+                        ler(connection, "instituicao")
+                        id_instituicao = input('\nInsira o ID da tabela instituicao que voce deseja remover: ')
+                        excluir_instituicao(connection, id_instituicao)
+                    case '7':
+                        ler(connection, "plano")
+                        id_plano = input('\nInsira o ID da tabela plano que voce deseja remover: ')
+                        excluir_plano(connection, id_plano)
+                    case '8':
+                        ler(connection, "usuario")
+                        id_usuario = input('\nInsira o ID da tabela usuario que voce deseja remover: ')
+                        excluir_usuario(connection, id_usuario)
+                    case '0':
+                        break
+                    case _:
+                        print('Opção inválida')
+            case '0':
+                break
+            case _:
+                print("Opção inválida.")
+
+#Menu principal
+def main():
+    iniciar_banco();
+
+    connection = conectar()
+    if not connection:
+        return
+
+    while True:
+        print("\n===== MENU PRINCIPAL WebDrive =====\n")
+        print("Escolha a tabela para operar:")
+        print("1 - Admin")
+        print("2 - Arquivo")
+        print("3 - Comentário")
+        print("4 - Compartilhamento")
+        print("5 - Histórico de versionamento")
+        print("6 - Instituição")
+        print("7 - Plano")
+        print("8 - Usuários")
+        print("0 - Sair")
+        print("\n===================================\n")
+        tabela_opcao = input("Escolha uma opção: ")
+
+        match tabela_opcao:
+            case '1':
+                ler(connection, "admin")
+                submenu(connection, "admin")
+            case '2':
+                ler(connection, "arquivo")
+                submenu(connection, "arquivo")
+            case '3':
+                ler(connection, "comentario")
+                submenu(connection, "comentario")
+            case '4':
+                ler(connection, "compartilhamento")
+                submenu(connection, "compartilhamento")
+            case '5':
+                ler(connection, "historico_de_versionamento")
+                submenu(connection, "hitorico_de_versionamento")
+            case '6':
+                ler(connection, "instituicao")
+                submenu(connection, "instituicao")
+            case '7':
+                ler(connection, "plano")
+                submenu(connection, "plano")
+            case '8':
+                ler(connection, "usuario")
+                submenu(connection, "usuario")
+            case '0':
+                break
+            case _:
+                print("Opção inválida.")
+
+    connection.close()
+    print("Saindo do programa...")
+
+if __name__ == "__main__":
+    main()
