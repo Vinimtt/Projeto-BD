@@ -193,18 +193,14 @@ def iniciar_banco():
             """
             """
             CREATE VIEW view_usuario AS
-            SELECT a.nome,a.tipo,a.tamanho,a.localizacao,a.url, a.data_de_ultima_alteracao
+
+            SELECT a.nome, a.tipo, a.tamanho, a.localizacao, a.url, a.data_de_ultima_alteracao
 
             FROM arquivo a
 
-            WHERE a.id IN (
+            WHERE a.id_usuario = 1
 
-                SELECT id_arquivo FROM possui WHERE id_usuario = 1 --id_usuario_atual() atualizar depois 
-
-                UNION
-    
-                SELECT id_arquivo FROM compartilhamento WHERE id_user_receive = 1 --id_usuario_atual() atualizar depois 
-            );
+            OR a.id IN (SELECT id_arquivo FROM compartilhamento WHERE id_user_receive = 1);
             """
             """
             CREATE VIEW view_usuarios_historico AS
@@ -212,7 +208,7 @@ def iniciar_banco():
 
             FROM historico_de_versionamento hv
 
-            WHERE hv.id_usuario = 1 --id_usuario_atual() alterar depois
+            WHERE hv.id_usuario = 1
             """
         ]
         for view in views:

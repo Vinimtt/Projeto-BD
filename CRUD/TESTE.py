@@ -615,3 +615,45 @@ def testar_triggers():
 
 # Executar teste
 testar_triggers()
+
+def testar_views():
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",  # ou 'administrador', 'empresa', 'usuario', conforme a role a testar
+            password="1234",  # ou 'adm123', 'empresa123', 'usuario123'
+            database="WebDrive"
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+
+            views = {
+                "view_admin": "SELECT * FROM view_admin",
+                "view_usuario": "SELECT * FROM view_usuario",
+                "view_usuarios_historico": "SELECT * FROM view_usuarios_historico"
+            }
+
+            for nome_view, consulta in views.items():
+                print(f"\nResultados da view: {nome_view}")
+                cursor.execute(consulta)
+                resultados = cursor.fetchall()
+                colunas = [i[0] for i in cursor.description]
+
+                if resultados:
+                    print("\t" + "\t".join(colunas))
+                    for linha in resultados:
+                        print("\t" + "\t".join(str(c) for c in linha))
+                else:
+                    print("\tNenhum resultado encontrado.")
+
+    except Error as e:
+        print("Erro ao acessar views:", e)
+
+    finally:
+        if 'connection' in locals() and connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("\nConexão encerrada.")
+
+testar_views()
