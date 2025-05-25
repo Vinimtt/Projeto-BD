@@ -182,6 +182,43 @@ def iniciar_banco():
         for trigger in triggers:
             cursor.execute(trigger)
 
+        #Criação das views
+        views = [
+            """
+            CREATE VIEW view_admin AS
+            
+            SELECT a.nome,a.tipo,a.tamanho,a.localizacao, a.url, a.data_de_ultima_alteracao
+            
+            FROM arquivo a;
+            """
+            """
+            CREATE VIEW view_usuario AS
+            SELECT a.nome,a.tipo,a.tamanho,a.localizacao,a.url, a.data_de_ultima_alteracao
+
+            FROM arquivo a
+
+            WHERE a.id IN (
+
+                SELECT id_arquivo FROM possui WHERE id_usuario = 1 --id_usuario_atual() atualizar depois 
+
+                UNION
+    
+                SELECT id_arquivo FROM compartilhamento WHERE id_user_receive = 1 --id_usuario_atual() atualizar depois 
+            );
+            """
+            """
+            CREATE VIEW view_usuarios_historico AS
+            SELECT hv.operacao,hv.data,hv.hora,hv.conteudo_alterado
+
+            FROM historico_de_versionamento hv
+
+            WHERE hv.id_usuario = 1 --id_usuario_atual() alterar depois
+            """
+        ]
+        for view in views:
+            cursor.execute(view)
+        print("Views criadas com sucesso")
+
         # CRIAÇÃO DAS PROCEDURES
         procedures = [
 
