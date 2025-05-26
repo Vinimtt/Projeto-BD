@@ -6,7 +6,7 @@ def iniciar_banco():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="2004"
         )
 
         if connection.is_connected():
@@ -44,7 +44,7 @@ def iniciar_banco():
                 )""",
                 """CREATE TABLE IF NOT EXISTS arquivo (
                     id INT PRIMARY KEY AUTO_INCREMENT,
-                    data_de_ultima_alteracao VARCHAR(100),
+                    data_de_ultima_alteracao DATE,
                     url VARCHAR(100),
                     localizacao VARCHAR(100),
                     permissao_de_acesso VARCHAR(100),
@@ -161,9 +161,8 @@ def iniciar_banco():
                 cursor.execute(proc)
             print("Procedures criadas com sucesso!")
 
-            # Triggers (sem DELIMITER, adaptados para execução direta)
-            cursor.execute("""
-            DROP TRIGGER IF EXISTS Registrar_operacao""")
+            # Triggers
+            cursor.execute("DROP TRIGGER IF EXISTS Registrar_operacao")
             cursor.execute("""
             CREATE TRIGGER Registrar_operacao
             AFTER UPDATE ON arquivo
@@ -175,8 +174,7 @@ def iniciar_banco():
             END
             """)
 
-            cursor.execute("""
-            DROP TRIGGER IF EXISTS Safe_security""")
+            cursor.execute("DROP TRIGGER IF EXISTS Safe_security")
             cursor.execute("""
             CREATE TRIGGER Safe_security
             BEFORE INSERT ON arquivo
@@ -189,7 +187,6 @@ def iniciar_banco():
                 END IF;
             END
             """)
-
             print("Triggers criadas com sucesso!")
 
             # Views
@@ -210,31 +207,34 @@ def iniciar_banco():
             ]
             for view in views:
                 cursor.execute(view)
-
             print("Views criadas com sucesso!")
 
-            # functions = [
-            #     """
-            #     CREATE FUNCTION Verificar_data(id_arquivo INT)
+            # Function corrigida
+            funcoes = [
+                """DROP FUNCTION IF EXISTS Verificar_data""",
+                """
+                CREATE FUNCTION Verificar_data(id_arquivo INT)
+                RETURNS BOOLEAN
+                DETERMINISTIC
+                BEGIN
+                    DECLARE data_comp DATE;
+                    DECLARE data_alt DATE;
 
-            #     RETURNS BOOLEAN
-            #     BEGIN 
+                    SELECT data_de_ultima_alteracao INTO data_alt FROM arquivo WHERE id = id_arquivo;
+                    SET data_comp = CURDATE();
 
-            #             DECLARE data_comp DATE;
-            #         SET data_comp :=(SELECT arquivo.data_ingresso FROM arquivo WHERE id = id_arquivo);
-            #             IF DATEDIFF(data_de_ultima_alteracao(), data_comp) > 100 THEN
-            #                     RETURN TRUE;
-            #         ELSE
-            #                     RETURN FALSE;
-            #                 END IF;
-            #     END$$
-                
-            #     DROP FUNCTION Verificar_data; 
-            #     """
-            # ]
-            # for function in functions:
-            #     cursor.execute(function)
-            # print("Function criada com sucesso")
+                    IF DATEDIFF(data_comp, data_alt) > 100 THEN
+                        RETURN TRUE;
+                    ELSE
+                        RETURN FALSE;
+                    END IF;
+                END
+                """
+            ]
+
+            for func in funcoes:
+                cursor.execute(func)
+            print("Function criada com sucesso!")
 
     except Error as e:
         print("Erro ao executar:", e)
@@ -250,7 +250,7 @@ def configurar_roles():
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password=""
+            password="2004"
         )
 
         if connection.is_connected():
